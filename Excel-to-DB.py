@@ -8,6 +8,10 @@ import openpyxl
 # Read the excel file and store the data in a DataFrame
 data = pd.read_excel('Data-NoHeads.xlsx')
 
+# sets non numerical data points to a value
+data.fillna(-100, inplace=True)
+data = data.apply(pd.to_numeric, errors='coerce').fillna(-100)
+
 # Modify the index to be 1-based
 data.index += 1
 
