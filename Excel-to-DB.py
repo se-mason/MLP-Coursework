@@ -2,10 +2,14 @@
 import pandas as pd
 import sqlite3 
 from sqlalchemy import create_engine
+import openpyxl
  
 
 # Read the excel file and store the data in a DataFrame
 data = pd.read_excel('Data-NoHeads.xlsx')
+
+# Modify the index to be 1-based
+data.index += 1
 
 # Create a connection to the SQLite database (or create it if it doesn't exist)
 conn = sqlite3.connect('DataSet.db')
@@ -14,6 +18,7 @@ cursor = conn.cursor()
 # Create a table (adjust the schema as needed)
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS data_table (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     column1 TEXT,
     column2 TEXT,
     column3 TEXT
@@ -22,7 +27,7 @@ CREATE TABLE IF NOT EXISTS data_table (
 
 # Use SQLAlchemy to import the DataFrame into the SQL database
 engine = create_engine('sqlite:///DataSet.db')
-data.to_sql('data_table', engine, if_exists='replace', index=False)
+data.to_sql('data_table', engine, if_exists='replace', index=True)
 
 # Commit the changes and close the connection
 conn.commit()
