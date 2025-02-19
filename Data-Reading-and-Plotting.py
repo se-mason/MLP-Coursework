@@ -11,13 +11,23 @@ import os
 DataBase = 'DataSet.db'
 table = 'data_table'
 
-column_names = ['Crakehill', 'Skip Bridge', 'Westwick', 'Skelton', 'Arkengarthdale', ' East Cowton', 'Malham Tarn', 'Snaizeholme' ]
-
 # Connect to the SQLite database
 conn = sql.connect(DataBase)
 cursor = conn.cursor()
 
+# Define the SQL query to get all column names from the table
+table_name = 'data_table'  # Replace with your table name
+query = f"PRAGMA table_info({table_name})"
 
+# Execute the query and fetch all results
+cursor.execute(query)
+columns_info = cursor.fetchall()
+
+# Extract column names from the results
+column_names = [info[1] for info in columns_info]
+
+# Remove the first two columns (index and date)
+column_names = column_names[2:]
 
 # Create a PdfPages object to save the plots
 with PdfPages('plots.pdf') as pdf:
