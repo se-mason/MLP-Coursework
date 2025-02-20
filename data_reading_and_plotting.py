@@ -10,14 +10,15 @@ import os
 
 # change to function to be called in main file
 
-def plotGraph(df, column_name):
+def plotGraph(df, column_name, pdf):
     # Plot the data
     plt.figure(figsize=(10, 6))
-    plt.scatter(df['index'], df[column_name], marker='o', color='b')
-    plt.title(f'{column_name} Data')
-    plt.xlabel('Index')
+    plt.scatter(df['index'], df[column_name], marker='o', linestyle='-', color='b')
+    plt.title(f'{column_name} vs time')
+    plt.xlabel('index')
     plt.ylabel(column_name)
-    plt.grid(True)        
+    plt.grid(True)
+     
 
     # Save the current figure to the PDF
     pdf.savefig()
@@ -47,15 +48,15 @@ column_names = column_names[2:]
 with PdfPages('plots.pdf') as pdf:
     # Define the SQL query to select all rows from a specific column
     for column_name in column_names:
-        query = f'SELECT "index","{column_name}" FROM data_table'
+        query = f'SELECT "index","DATE", "{column_name}" FROM data_table'
         # Execute the query and fetch all results
         cursor.execute(query)
         rows = cursor.fetchall()
 
         # Convert the results to a pandas DataFrame
-        df = pd.DataFrame(rows, columns=['index', column_name])
+        df = pd.DataFrame(rows, columns=['index','DATE', column_name])
 
-        plotGraph(df, column_name)
+        plotGraph(df, column_name, pdf)
 
 
 # Close the connection
