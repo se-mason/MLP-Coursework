@@ -8,6 +8,21 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import os
 
+# change to function to be called in main file
+
+def plotGraph(df, column_name):
+    # Plot the data
+    plt.figure(figsize=(10, 6))
+    plt.scatter(df['index'], df[column_name], marker='o', color='b')
+    plt.title(f'{column_name} Data')
+    plt.xlabel('Index')
+    plt.ylabel(column_name)
+    plt.grid(True)        
+
+    # Save the current figure to the PDF
+    pdf.savefig()
+    plt.close()
+
 DataBase = 'DataSet.db'
 table = 'data_table'
 
@@ -16,8 +31,7 @@ conn = sql.connect(DataBase)
 cursor = conn.cursor()
 
 # Define the SQL query to get all column names from the table
-table_name = 'data_table'  # Replace with your table name
-query = f"PRAGMA table_info({table_name})"
+query = f"PRAGMA table_info({table})"
 
 # Execute the query and fetch all results
 cursor.execute(query)
@@ -41,17 +55,7 @@ with PdfPages('plots.pdf') as pdf:
         # Convert the results to a pandas DataFrame
         df = pd.DataFrame(rows, columns=['index', column_name])
 
-        # Plot the data
-        plt.figure(figsize=(10, 6))
-        plt.scatter(df['index'], df[column_name], marker='o', color='b')
-        plt.title(f'{column_name} Data')
-        plt.xlabel('Index')
-        plt.ylabel(column_name)
-        plt.grid(True)        
-
-        # Save the current figure to the PDF
-        pdf.savefig()
-        plt.close()
+        plotGraph(df, column_name)
 
 
 # Close the connection
