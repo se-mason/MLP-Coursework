@@ -42,7 +42,7 @@ def boundsFunction(DF_range, deviationWeight):
     # Return the bounds
     return lower_bound, upper_bound
 
-def pointReplacer(neighborRange, DFLength, rangeFrame, point, removedDict):
+def pointReplacer(neighborRange, DFLength, rangeFrame, point):
     '''Function to replace a point with suitable data'''
     sideRange = round(neighborRange/2)
 
@@ -59,6 +59,13 @@ def pointReplacer(neighborRange, DFLength, rangeFrame, point, removedDict):
     else:
         end = int(point.iloc[0])+sideRange
 
+    # Create a range of the data around the point
+    rangeFrame = rangeFrame.loc[start:end]
+
+    # Calcualte the average
+    average = rangeFrame.mean(axis=0, skipna=True, numeric_only=True)
+
+    return average.iloc[1]
 
     
 
@@ -80,28 +87,27 @@ def removeOutliers(columnDF, column_name, remove_count, removedDict):
 
 
     # Adds the column to the removed list
-    removedDict[column_name] = []
+    removedDict[column_name] = {}
 
     # As these max flow rates are the past, we should remove any values above these * by a constant factor
     outlierContsant = 3
 
     # Determines if each point is an outlier
     for point in columnDF.itertuples():
-        print(point)
-        print(point[3])
-        # No point should be negative
         # No point should be negative
         if int(point[3]) < 0:
             columnDF.loc[point.Index, column_name] = np.nan
             remove_count += 1
-            removedDict[column_name].append([point.Index, point.DATE, point[3]]) # Stores the data point that is removed
+            removedDict[column_name][point.Index] = [point.DATE, point[3]] # Stores the data point that is removed
+            print('removed')
             continue
 
         # Max value checks
         if int(point[3]) > (max_values[column_name] * outlierContsant):
             columnDF.loc[point.Index, column_name] = np.nan
             remove_count += 1
-            removedDict[column_name].append([point.Index, point.DATE, point[3]]) # Stores the data point that is removed
+            removedDict[column_name][point.Index] = [point.DATE, point[3]] # Stores the data point that is removed
+            print('removed')
             continue
 
     
@@ -111,7 +117,7 @@ def removeOutliers(columnDF, column_name, remove_count, removedDict):
 # remove points to na
 # then replace na points but use skip na to get the average of the points around it
 
-def standardiseData():
+def standardiseData(neighborRange):
     '''Function to standardise all data points in the database'''
     # counter to keep track of the number of points removed
     remove_count = 0
@@ -127,8 +133,25 @@ def standardiseData():
             rows = cursor.fetchall()
             columnDF = pd.DataFrame(rows, columns=['index', 'DATE', column])
 
+            # length of data
+            DFLength = len(columnDF)
+
             # remove the outliers from the set and replace with NaN
             remove_count, removedDict, columnDF = removeOutliers(columnDF, column, remove_count, removedDict)
+
+            # Find all NaN points
+            nan_points = columnDF[columnDF[column].isna()]
+
+            # Replace NaN points with custom logic
+            for idx, row in nan_points.iterrows():
+                # generare the replacement
+                average = pointReplacer(neighborRange, DFLength, columnDF, nan_points.loc[idx])
+                columnDF.loc[idx, column] = average
+
+                # updates Dict
+                removedDict[column][idx].append(average)
+                print('replaced')
+
 
             # plot the graph
             plotGraph(columnDF, column, pdf)
@@ -140,6 +163,6 @@ def standardiseData():
 
 
 
-standardiseData()
+standardiseData(21)
 # Close the connection 
 conn.close()
