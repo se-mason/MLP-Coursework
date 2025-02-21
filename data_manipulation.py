@@ -35,14 +35,16 @@ def rangeCondenser(neighborRange, DFLength, columnDF, point):
     # if the point is close to 0
     if int(point[0])-sideRange < 0:
             start = 0
-    else:
-            start = int(point[0])-sideRange
+            end = neighborRange-int(point[0])
 
-    # if the point is close to the end of the DF
-    if int(point[0])+sideRange > DFLength:
+            # if the point is close to the end of the DF
+    elif int(point[0])+sideRange > DFLength:
         end = DFLength
+        start = DFLength - neighborRange
     else:
+        start = int(point[0])-sideRange
         end = int(point[0])+sideRange
+
 
     # Create a range of the data around the point
     rangeFrame = columnDF.loc[start:end]
@@ -181,18 +183,45 @@ def standardiseData(neighborRange, deviationWeight, pdfName):
             # plot the graph
             plotGraph(columnDF, column, pdf)
 
-    pdf_path = 'pdfName'
-    #os.startfile(pdf_path)
+
+    #os.startfile(pdf)
     for i in removedDict:
         print(f'{i},  {removedDict[i]}')
 
-    print(f'Total number of points removed: {remove_count}')
+    return removedDict, remove_count
+
+def databaseUpdate(removedDict):
+    '''Function to update the database with the new data'''
+    for column in removedDict:
+        for point in removedDict[column]:
+            query = f'UPDATE data_table SET "{column}" = {removedDict[column][point][2]} WHERE "index" = {point}'
+            print(query)
+            #cursor.execute(query)
+
+    conn.commit()
 
 
 dayRange = input('Enter the range of days to check for outliers: ')
 deviationWeight = input('Enter the standard deviation weight: ')
-pdfName = f'plot_range:{dayRange}_deviation:{deviationWeight}.pdf'
+pdfName = str(f'plot_range{dayRange}_deviation{deviationWeight}.pdf')
 
-standardiseData(int(dayRange), int(deviationWeight), pdfName)
-# Close the connection 
+removedDict, remove_count = standardiseData(int(dayRange), float(deviationWeight), pdfName)
+
+for i in removedDict:
+    print(f'{i},  {removedDict[i]}')
+
+print(f'Total number of points removed: {remove_count}')
+
+if input('Would you like to save this outcome [y/n]: ') == 'y':
+    #with open('removedData.txt', 'w') as f:
+        #for i in removedDict:
+            #f.write(f'{i},  {removedDict[i]}\n')
+
+    databaseUpdate(removedDict)
+
+    
+
+
+
+
 conn.close()
