@@ -27,6 +27,38 @@ column_names = [info[1] for info in columns_info]
 # Remove the first two columns (index and date)
 column_names = column_names[2:]
 
+def rangeCondenser(neighborRange, DFLength, columnDF, point):
+    '''Function to create a smaller range of data around a point'''
+    sideRange = round(neighborRange/2)
+
+    # Checks if the data is out of bounds
+    # if the point is close to 0
+    if int(point[0])-sideRange < 0:
+            start = 0
+    else:
+            start = int(point[0])-sideRange
+
+    # if the point is close to the end of the DF
+    if int(point[0])+sideRange > DFLength:
+        end = DFLength
+    else:
+        end = int(point[0])+sideRange
+
+    # Create a range of the data around the point
+    rangeFrame = columnDF.loc[start:end]
+
+    return rangeFrame
+
+
+def pointReplacer(neighborRange, DFLength, columnDF, point):
+    '''Function to replace a point with suitable data'''
+
+    rangeFrame = rangeCondenser(neighborRange, DFLength, columnDF, point)
+
+    # Calcualte the average
+    average = rangeFrame.mean(axis=0, skipna=True, numeric_only=True)
+
+    return average.iloc[1]
 
 def boundsFunction(DF_range, deviationWeight):
     '''Fucntion to calcualte the upper and lowerbounds of accepted values'''
@@ -40,32 +72,24 @@ def boundsFunction(DF_range, deviationWeight):
     upper_bound = average.iloc[1] + (deviationWeight * deviation.iloc[1])
 
     # Return the bounds
-    return lower_bound, upper_bound
+    return lower_bound, upper_bound, average
 
-def pointReplacer(neighborRange, DFLength, rangeFrame, point):
-    '''Function to replace a point with suitable data'''
-    sideRange = round(neighborRange/2)
+def standardDeviationCheck(columnDF, column_name, neighborRange, removedDict, remove_count, deviationWeight):
+    '''Function to check the standard deviation of the data points'''
+    for point in columnDF.itertuples():
 
-    # Checks if the data is out of bounds
-    # if the point is close to 0
-    if int(point.iloc[0])-sideRange < 0:
-            start = 0
-    else:
-            start = int(point.iloc[0])-sideRange
+        # Create a range of data around the point
+        DF_range = rangeCondenser(neighborRange, len(columnDF), columnDF, point)
 
-    # if the point is close to the end of the DF
-    if int(point.iloc[0])+sideRange > DFLength:
-        end = DFLength
-    else:
-        end = int(point.iloc[0])+sideRange
+        # retreives bounds
+        lower_bound, upper_bound, average = boundsFunction(DF_range, deviationWeight)
+        # Check if the point is within the bounds
+        if not (lower_bound <= point[3] <= upper_bound):
+            columnDF.loc[point.Index, column_name] = average.iloc[1]
+            remove_count += 1
+            removedDict[column_name][point.Index] = [point.DATE, point[3], float(average.iloc[1])] # Stores the data point that is removed
 
-    # Create a range of the data around the point
-    rangeFrame = rangeFrame.loc[start:end]
-
-    # Calcualte the average
-    average = rangeFrame.mean(axis=0, skipna=True, numeric_only=True)
-
-    return average.iloc[1]
+    return remove_count, removedDict, columnDF
 
     
 
@@ -99,7 +123,6 @@ def removeOutliers(columnDF, column_name, remove_count, removedDict):
             columnDF.loc[point.Index, column_name] = np.nan
             remove_count += 1
             removedDict[column_name][point.Index] = [point.DATE, point[3]] # Stores the data point that is removed
-            print('removed')
             continue
 
         # Max value checks
@@ -107,7 +130,6 @@ def removeOutliers(columnDF, column_name, remove_count, removedDict):
             columnDF.loc[point.Index, column_name] = np.nan
             remove_count += 1
             removedDict[column_name][point.Index] = [point.DATE, point[3]] # Stores the data point that is removed
-            print('removed')
             continue
 
     
@@ -117,7 +139,7 @@ def removeOutliers(columnDF, column_name, remove_count, removedDict):
 # remove points to na
 # then replace na points but use skip na to get the average of the points around it
 
-def standardiseData(neighborRange):
+def standardiseData(neighborRange, deviationWeight, pdfName):
     '''Function to standardise all data points in the database'''
     # counter to keep track of the number of points removed
     remove_count = 0
@@ -125,8 +147,10 @@ def standardiseData(neighborRange):
     removedDict = {}
 
     # Create a PdfPages object to save the plots
-    with PdfPages('proposed_plots.pdf') as pdf:
+    with PdfPages(pdfName) as pdf:
         for column in column_names:
+            print(column)
+
             # retrieves the data from the column
             query = f'SELECT "index","DATE", "{column}" FROM data_table'
             cursor.execute(query)
@@ -143,26 +167,32 @@ def standardiseData(neighborRange):
             nan_points = columnDF[columnDF[column].isna()]
 
             # Replace NaN points with custom logic
-            for idx, row in nan_points.iterrows():
+            for i in nan_points.itertuples():
+                idx = i.Index
                 # generare the replacement
-                average = pointReplacer(neighborRange, DFLength, columnDF, nan_points.loc[idx])
+                average = pointReplacer(neighborRange, DFLength, columnDF, i)
                 columnDF.loc[idx, column] = average
 
                 # updates Dict
-                removedDict[column][idx].append(average)
-                print('replaced')
+                removedDict[column][idx].append(float(average))
 
+            remove_count, removedDict, columnDF = standardDeviationCheck(columnDF, column, neighborRange, removedDict, remove_count, deviationWeight)
 
             # plot the graph
             plotGraph(columnDF, column, pdf)
 
-    pdf_path = 'proposed_plots.pdf'
-    os.startfile(pdf_path)
-    print(removedDict)
+    pdf_path = 'pdfName'
+    #os.startfile(pdf_path)
+    for i in removedDict:
+        print(f'{i},  {removedDict[i]}')
+
+    print(f'Total number of points removed: {remove_count}')
 
 
+dayRange = input('Enter the range of days to check for outliers: ')
+deviationWeight = input('Enter the standard deviation weight: ')
+pdfName = f'plot_range:{dayRange}_deviation:{deviationWeight}.pdf'
 
-
-standardiseData(21)
+standardiseData(int(dayRange), int(deviationWeight), pdfName)
 # Close the connection 
 conn.close()
