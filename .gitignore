@@ -1,2 +1,11 @@
 ANN_env/
 .devdbrc
+Report.aux
+Report.log
+Report.pdf
+Report.synctex.gz
+Report.toc
+Report.fdb_latexmk
+Report.fls
+Report.out
+Report.blg

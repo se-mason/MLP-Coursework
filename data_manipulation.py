@@ -204,7 +204,7 @@ def databaseUpdate(removedDict):
 
 dayRange = input('Enter the range of days to check for outliers: ')
 deviationWeight = input('Enter the standard deviation weight: ')
-pdfName = str(f'plot_range{dayRange}_deviation{deviationWeight}.pdf')
+pdfName = str(f'plots/plot_range{dayRange}_deviation{deviationWeight}.pdf')
 
 removedDict, remove_count = standardiseData(int(dayRange), float(deviationWeight), pdfName)
 
@@ -214,7 +214,7 @@ for i in removedDict:
 print(f'Total number of points removed: {remove_count}')
 
 if input('Would you like to save this outcome [y/n]: ') == 'y':
-    with open('removedData.txt', 'w') as f:
+    with open(f'plots/removedData{dayRange}_{deviationWeight}.txt', 'w') as f:
         for i in removedDict:
             f.write(f'{i},  {removedDict[i]}\n')
 
@@ -226,4 +226,3 @@ if input('Would you like to save this outcome [y/n]: ') == 'y':
 
 
 conn.close()
-45

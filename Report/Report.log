@@ -1,15 +1,15 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.2.22)  22 FEB 2025 02:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2025.2.22)  22 FEB 2025 14:58
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**c:/Users/smaso/Documents/GitHub/MLP-Coursework/Report.tex
-(c:/Users/smaso/Documents/GitHub/MLP-Coursework/Report.tex
+**w:/Users/smaso/Documents/Github/MLP-Coursework/Report/Report.tex
+(w:/Users/smaso/Documents/GitHub/MLP-Coursework/Report/Report.tex
 LaTeX2e <2024-11-01> patch level 2
 L3 programming layer <2025-01-18>
-(c:/texlive/2024/texmf-dist/tex/latex/base/report.cls
+(c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/base/report.cls
 Document Class: report 2024/06/29 v1.4n Standard LaTeX document class
-(c:/texlive/2024/texmf-dist/tex/latex/base/size10.clo
+(c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/base/size10.clo
 File: size10.clo 2024/06/29 v1.4n Standard LaTeX file (size option)
 )
 \c@part=\count196
@@ -24,21 +24,21 @@ File: size10.clo 2024/06/29 v1.4n Standard LaTeX file (size option)
 \abovecaptionskip=\skip49
 \belowcaptionskip=\skip50
 \bibindent=\dimen141
-) (c:/texlive/2024/texmf-dist/tex/latex/amsmath/amsmath.sty
+) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/amsmath/amsmath.sty
 Package: amsmath 2024/11/05 v2.17t AMS math features
 \@mathmargin=\skip51
 
 For additional information on amsmath, use the `?' option.
-(c:/texlive/2024/texmf-dist/tex/latex/amsmath/amstext.sty
+(c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/amsmath/amstext.sty
 Package: amstext 2021/08/26 v2.01 AMS text
- (c:/texlive/2024/texmf-dist/tex/latex/amsmath/amsgen.sty
+ (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/amsmath/amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
 \@emptytoks=\toks17
 \ex@=\dimen142
-)) (c:/texlive/2024/texmf-dist/tex/latex/amsmath/amsbsy.sty
+)) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/amsmath/amsbsy.sty
 Package: amsbsy 1999/11/29 v1.2d Bold Symbols
 \pmbraise@=\dimen143
-) (c:/texlive/2024/texmf-dist/tex/latex/amsmath/amsopn.sty
+) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/amsmath/amsopn.sty
 Package: amsopn 2022/04/08 v2.04 operator names
 )
 \inf@bad=\count271
@@ -88,25 +88,25 @@ LaTeX Info: Redefining \Relbar on input line 970.
 \mathdisplay@stack=\toks21
 LaTeX Info: Redefining \[ on input line 2953.
 LaTeX Info: Redefining \] on input line 2954.
-) (c:/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
+) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
- (c:/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty
+ (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/graphics/keyval.sty
 Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
 \KV@toks@=\toks22
-) (c:/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
+) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/graphics/graphics.sty
 Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
- (c:/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty
+ (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/graphics/trig.sty
 Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
-) (c:/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: pdftex.def on input line 106.
- (c:/texlive/2024/texmf-dist/tex/latex/graphics-def/pdftex.def
+ (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/graphics-def/pdftex.def
 File: pdftex.def 2024/04/13 v1.2c Graphics/color driver for pdftex
 ))
 \Gin@req@height=\dimen151
 \Gin@req@width=\dimen152
-) (c:/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
+) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-05-08 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count283
 \l__pdf_internal_box=\box54
@@ -127,7 +127,7 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 8.
 LaTeX Font Info:    ... okay on input line 8.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 8.
 LaTeX Font Info:    ... okay on input line 8.
- (c:/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+ (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count284
 \scratchdimen=\dimen153
@@ -140,16 +140,16 @@ LaTeX Font Info:    ... okay on input line 8.
 \MPnumerator=\count288
 \makeMPintoPDFobject=\count289
 \everyMPtoPDFconversion=\toks24
-) (c:/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+) (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
- (c:/texlive/2024/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+ (c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
 
 [1
 
-{c:/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./Report.toc)
+{c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./Report.toc)
 \tf@toc=\write3
 \openout3 = `Report.toc'.
 
@@ -170,14 +170,14 @@ L3 programming layer <2025-01-18>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 2033 strings out of 475129
- 30348 string characters out of 5765427
- 415562 words of memory out of 5000000
- 25052 multiletter control sequences out of 15000+600000
+ 2034 strings out of 473201
+ 32607 string characters out of 5693207
+ 420492 words of memory out of 5000000
+ 25299 multiletter control sequences out of 15000+600000
  564066 words of font info for 54 fonts, out of 8000000 for 9000
- 36 hyphenation exceptions out of 8191
- 57i,6n,65p,270b,189s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
+ 1141 hyphenation exceptions out of 8191
+ 57i,6n,65p,277b,189s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb><c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/Users/smaso/AppData/Local/Programming/Languages/TeX/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb>
 Output written on Report.pdf (3 pages, 58446 bytes).
 PDF statistics:
  39 PDF objects out of 1000 (max. 8388607)

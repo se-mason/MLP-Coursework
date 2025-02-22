@@ -6,7 +6,7 @@ import openpyxl
  
 
 # Read the excel file and store the data in a DataFrame
-data = pd.read_excel('Data-NoHeads.xlsx')
+data = pd.read_excel('xlsx/Data-NoHeads.xlsx')
 
 # Check for non-numeric values in non-first columns and replace them with -100
 data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(-100)

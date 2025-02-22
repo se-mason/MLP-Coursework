@@ -46,7 +46,7 @@ column_names = column_names[2:]
 
 def function():
 # Create a PdfPages object to save the plots
-    with PdfPages('plots.pdf') as pdf:
+    with PdfPages('plots/plots.pdf') as pdf:
         # Define the SQL query to select all rows from a specific column
         for column_name in column_names:
             query = f'SELECT "index","DATE", "{column_name}" FROM data_table'
