@@ -1,0 +1,85 @@
+\documentclass{report}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage[a4paper, margin=0.5in]{geometry}
+
+\title{Predicting flow with Back Propagation Neural Networks}
+\author{F328799}
+\date{}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\setcounter{chapter}{-1} % start chapter numbering at 0 %
+\chapter{Outline} % explain the aims of the project %
+The aim of this project is to predict the flow-rate of the River Ouse at Skelton in advance to predict the flood potential.
+We will use a Back Propagation Neural Network to predict the flow-rate of the river, using data from the suppoudning catchment area.
+This data includes river flow-rate from Skip Bridge, Crakehill and Westwick, as well as rainfall data from East Cowton, Arkengarthdale, Snaizeholme and Malham Tarn.
+The data was collected between 01/01/1993 to 31/12/1996.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/river_ouse.jpg} % Replace with the correct path to your image
+    \caption{River Ouse Catchment}
+    \label{fig:river_ouse}
+\end{figure}
+
+The sections of this report will include:
+\begin{enumerate}
+    \item Data Pre-processing
+    \item Implementing the Neural Network
+    \item Model Training
+    \item Evaluation
+\end{enumerate}
+
+\section{System Environments}
+The ANN will be programmed using python 3.13.2 with a conda virtual environment.
+The libraries used will include:
+\begin{itemize}
+    \item numpy
+    \item pandas, sqlalchemy
+    \item openpyxl
+    \item sqlite3
+    \item matplotlib
+\end{itemize}
+
+The data will be stored in an SQLite database, this is for ease of access and to keep the data in a single location, with concise SQL commands to access the data.
+\newline
+The data will be split into training and testing data, with 60\% of the data used for training, 20\% used for testing and 20\% for evaluation.
+
+
+\chapter{Data Pre-processing}
+
+The first step is to import the data from the give xlsx file into the database.
+This will be done using the pandas library to read the data from the xlsx file and then using the sqlalchemy library to write the data to the database.
+For simplicity, I created a second xlsx file without the first row of headers, this is so that the data can be read into the database without any issues.
+\vspace{1em}
+\newline
+This code snippit shows how I handled the non-numerical data in the xlsx file.
+It is then imported into the database using the sqlalchemy library.
+Full code will be enlcosed in the accompanying files.
+\begin{lstlisting}[language=Python]
+excel_to_db.py
+import pandas as pd
+from sqlalchemy import create_engine
+
+# Read the excel file and store the data in a DataFrame
+data = pd.read_excel('xlsx/Data-NoHeads.xlsx')
+
+# Check for non-numeric values in non-first columns and replace them with -100
+data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(-100)
+\end{lstlisting}
+\vspace{1em}
+Using the database as a source of data, we can now begin to pre-process the data.
+Using matplotlib, we can plot the data to see if there are any trends or patterns in the data,
+along with any outliers that may need to be removed.
+
+
+
+
+
+
+\end{document}
