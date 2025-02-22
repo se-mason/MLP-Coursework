@@ -12,7 +12,7 @@ data = pd.read_excel('Data-NoHeads.xlsx')
 data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(-100)
 
 # Modify the index to be 1-based
-data.index += 1
+# data.index += 1
 
 # Create a connection to the SQLite database (or create it if it doesn't exist)
 conn = sqlite3.connect('DataSet.db')
@@ -36,3 +36,4 @@ data.to_sql('data_table', engine, if_exists='replace', index=True, index_label='
 # Commit the changes and close the connection
 conn.commit()
 conn.close()
+print('Data imported successfully!')

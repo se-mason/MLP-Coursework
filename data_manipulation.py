@@ -89,7 +89,7 @@ def standardDeviationCheck(columnDF, column_name, neighborRange, removedDict, re
         if not (lower_bound <= point[3] <= upper_bound):
             columnDF.loc[point.Index, column_name] = average.iloc[1]
             remove_count += 1
-            removedDict[column_name][point.Index] = [point.DATE, point[3], float(average.iloc[1])] # Stores the data point that is removed
+            removedDict[column_name][point.Index] = [point.DATE, point[3], round(float(average.iloc[1]),3)] # Stores the data point that is removed
 
     return remove_count, removedDict, columnDF
 
@@ -176,7 +176,7 @@ def standardiseData(neighborRange, deviationWeight, pdfName):
                 columnDF.loc[idx, column] = average
 
                 # updates Dict
-                removedDict[column][idx].append(float(average))
+                removedDict[column][i.Index].append(round(float(average),3))
 
             remove_count, removedDict, columnDF = standardDeviationCheck(columnDF, column, neighborRange, removedDict, remove_count, deviationWeight)
 
@@ -194,9 +194,10 @@ def databaseUpdate(removedDict):
     '''Function to update the database with the new data'''
     for column in removedDict:
         for point in removedDict[column]:
+            # updates the points that have been removed to their new data points
             query = f'UPDATE data_table SET "{column}" = {removedDict[column][point][2]} WHERE "index" = {point}'
             print(query)
-            #cursor.execute(query)
+            cursor.execute(query)
 
     conn.commit()
 
@@ -213,9 +214,9 @@ for i in removedDict:
 print(f'Total number of points removed: {remove_count}')
 
 if input('Would you like to save this outcome [y/n]: ') == 'y':
-    #with open('removedData.txt', 'w') as f:
-        #for i in removedDict:
-            #f.write(f'{i},  {removedDict[i]}\n')
+    with open('removedData.txt', 'w') as f:
+        for i in removedDict:
+            f.write(f'{i},  {removedDict[i]}\n')
 
     databaseUpdate(removedDict)
 
@@ -225,3 +226,4 @@ if input('Would you like to save this outcome [y/n]: ') == 'y':
 
 
 conn.close()
+45

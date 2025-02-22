@@ -44,24 +44,27 @@ column_names = [info[1] for info in columns_info]
 # Remove the first two columns (index and date)
 column_names = column_names[2:]
 
+def function():
 # Create a PdfPages object to save the plots
-with PdfPages('plots.pdf') as pdf:
-    # Define the SQL query to select all rows from a specific column
-    for column_name in column_names:
-        query = f'SELECT "index","DATE", "{column_name}" FROM data_table'
-        # Execute the query and fetch all results
-        cursor.execute(query)
-        rows = cursor.fetchall()
+    with PdfPages('plots.pdf') as pdf:
+        # Define the SQL query to select all rows from a specific column
+        for column_name in column_names:
+            query = f'SELECT "index","DATE", "{column_name}" FROM data_table'
+            # Execute the query and fetch all results
+            cursor.execute(query)
+            rows = cursor.fetchall()
 
-        # Convert the results to a pandas DataFrame
-        df = pd.DataFrame(rows, columns=['index','DATE', column_name])
+            # Convert the results to a pandas DataFrame
+            df = pd.DataFrame(rows, columns=['index','DATE', column_name])
 
-        plotGraph(df, column_name, pdf)
+            plotGraph(df, column_name, pdf)
 
 
-# Close the connection
-conn.close()
+    # Close the connection
+    conn.close()
 
 # Open the PDF file with the default PDF viewer
 # pdf_path = 'plots.pdf'
 # os.startfile(pdf_path)
+
+#function()
