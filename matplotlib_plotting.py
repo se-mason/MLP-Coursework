@@ -3,19 +3,19 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 
-def scatter_plot(columnName, columnData, pdfPath, pointColour):
+def scatter_plot(dataSets, columnName, pdfFile, colourSets):
     '''Function for plotting a scatter plot of a column of data'''
-    # Create a PdfPages object to save the plots
-    with PdfPages(pdfPath) as pdf:
-        # Plot the data
-        plt.figure(figsize=(10, 6))
-        plt.scatter(columnData.index, columnData[columnName], marker='o', linestyle='-', color=pointColour)
-        plt.title(f'{columnName} vs time')
-        plt.xlabel('date')
-        plt.ylabel(columnName)
-        plt.grid(True)
-        
-        # Save the current figure to the PDF
-        pdf.savefig()
-        plt.close()
+    
+    # Plot the data
+    plt.figure(figsize=(10, 6))
+    for data, color in zip(dataSets, colourSets):
+        plt.scatter(data['DATE'], data[columnName], c=color, label=f'{color} data')
+    plt.title(f'{columnName} vs time')
+    plt.xlabel('Date')
+    plt.ylabel(columnName)
+    plt.grid(True)
+
+    # Save the current figure to the PDF
+    pdfFile.savefig()
+    plt.close()
 
