@@ -60,17 +60,18 @@ For simplicity, I created a second xlsx file without the first row of headers, t
 \newline
 This code snippit shows how I handled the non-numerical data in the xlsx file.
 It is then imported into the database using the sqlalchemy library.
-Full code will be enlcosed in the accompanying files.
-\begin{lstlisting}[language=Python]
+Full code will be enlcosed in the accompanying files. % change code to na %
+\begin{lstlisting}[language=Python] 
 excel_to_db.py
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine
 
 # Read the excel file and store the data in a DataFrame
 data = pd.read_excel('xlsx/Data-NoHeads.xlsx')
 
-# Check for non-numeric values in non-first columns and replace them with -100
-data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(-100)
+# Check for non-numeric values in non-first columns and replace them with na values
+data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(np.nan)
 \end{lstlisting}
 \vspace{1em}
 Using the database as a source of data, we can now begin to pre-process the data.

@@ -6,7 +6,7 @@ import pandas as pd
 import sqlite3 as sql
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-import os
+
 
 # change to function to be called in main file
 
