@@ -52,6 +52,7 @@ The data will be split into training and testing data, with 60\% of the data use
 
 
 \chapter{Data Pre-processing}
+\section{Importing and extreme outliers}
 
 The first step is to import the data from the give xlsx file into the database.
 This will be done using the pandas library to read the data from the xlsx file and then using the sqlalchemy library to write the data to the database.
@@ -60,26 +61,79 @@ For simplicity, I created a second xlsx file without the first row of headers, t
 \newline
 This code snippit shows how I handled the non-numerical data in the xlsx file.
 It is then imported into the database using the sqlalchemy library.
-Full code will be enlcosed in the accompanying files.
-\begin{lstlisting}[language=Python]
+Full code will be enlcosed in the accompanying files. % change code to na %
+\begin{lstlisting}[language=Python] 
 excel_to_db.py
 import pandas as pd
+import numpy as np
 from sqlalchemy import create_engine
 
 # Read the excel file and store the data in a DataFrame
 data = pd.read_excel('xlsx/Data-NoHeads.xlsx')
 
-# Check for non-numeric values in non-first columns and replace them with -100
-data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(-100)
+# Check for non-numeric values in non-first columns and replace them with na values
+data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(np.nan)
 \end{lstlisting}
 \vspace{1em}
 Using the database as a source of data, we can now begin to pre-process the data.
 Using matplotlib, we can plot the data to see if there are any trends or patterns in the data,
 along with any outliers that may need to be removed.
 
+\vspace{1em}
+In the given dataset, there were a number of values that were not possible, such as negative flow rates and rainfall values in the thousands.
+These values need to be removed from the dataset to ensure the model is accurate.
+To remove these and other 'extreme' outliers, I used the interquartile range (IQR) method.
+When I implemented this, I used a variable to multiply by the IQR to get the upper and lower bounds, allowing me to refine the data to a point I thought was acceptable.
 
+\vspace{1em}
+A tpycical wieght for extreme values is 3, this is because the IQR is the range between the 25th and 75th percentile, so multiplying by 3 gives a range of 99.7\% of the data.
+However, as the data is skewed heavily towards 0, the 75th percentile still encapuslates a large amount of possible data within a wide range.
+After experimenting with different values, the results were as follows:
 
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Weight & Amount Removed \\
+        \hline
+        1.5 & 2031 \\
+        3.0 & 782 \\
+        6.0 & 176 \\
+        10.0 & 50 \\
+        \hline
+    \end{tabular}
+    \caption{Results of different weights for IQR}
+    \label{tab:iqr_results}
+\end{table}
 
+From testing, I decided that 10 was the best weight to use, as it removed the most extreme values without removing too much data.
+The remaining data looks real and is within a reasonable range for realistic rainfall and flow rates.
 
+\section{Averging and Deviations}
+
+The data has had its extreme outliers removed, but it is still not in a usable state.
+The data needs to be averaged and standardised to ensure that the data is in a usable state for the neural network.
+
+Our IQR with extreme weighting method does not account for large amount of rainfall in a dry spell, or low flow rate at a time of flooding.
+To account for this, we will use methods to determine if the data is within a reasonable range, over a period of time.
+
+\vspace{1em}
+Flow rate of a river rises and falls in patterns, so to best catch outliers we will use a mean and standard deviation over a period of time.
+This method determines if the data follows the trend of its neighbors, and if it does not, it is removed from the dataset.
+One day of high flow rate isn't a realisic measurement as the river constantly flows.
+\vspace{1em}
+\newline
+
+However, rainfall can be more sporadic, so we will once again use a weighted IQR method to remove extreme values.
+This will be done over a period of time, as a single day of high rainfall is possible in a storm, before a low rainfall spell occurs again.
+By splitting the data this way we allow the more accurate flow rate data to be used in the model, while still allowing for the sporadic nature of rainfall.
+
+% code %
+
+Once the data points have been removed from the dataset, we can replace them with the average of the surrounding data points.
+This is to ensure that the data is continuous and that the model can be trained on the data.
+
+% code %
 
 \end{document}
+ 

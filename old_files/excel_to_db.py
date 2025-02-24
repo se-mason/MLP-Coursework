@@ -3,13 +3,14 @@ import pandas as pd
 import sqlite3 
 from sqlalchemy import create_engine
 import openpyxl
+import numpy as np
  
 
 # Read the excel file and store the data in a DataFrame
 data = pd.read_excel('xlsx/Data-NoHeads.xlsx')
 
-# Check for non-numeric values in non-first columns and replace them with -100
-data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(-100)
+# Check for non-numeric values in non-first columns and replace them with na points
+data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(np.nan)
 
 # Modify the index to be 1-based
 # data.index += 1
@@ -31,7 +32,7 @@ CREATE TABLE data_table (
 
 # Use SQLAlchemy to import the DataFrame into the SQL database
 engine = create_engine('sqlite:///DataSet.db')
-data.to_sql('data_table', engine, if_exists='replace', index=True, index_label='index')
+data.to_sql('data_table', engine, if_exists='replace')
 
 # Commit the changes and close the connection
 conn.commit()

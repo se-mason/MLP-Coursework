@@ -6,7 +6,7 @@ import pandas as pd
 import sqlite3 as sql
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-import os
+
 
 # change to function to be called in main file
 
@@ -64,7 +64,7 @@ def function():
     conn.close()
 
 # Open the PDF file with the default PDF viewer
-# pdf_path = 'plots.pdf'
+# pdf_path = 'plots.pdf'  
 # os.startfile(pdf_path)
 
 #function()
