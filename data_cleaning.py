@@ -1,6 +1,7 @@
 import numpy as np
+import pandas as pd
 
-def local_range_df(columnData, dataPoint, columnLength, windowSize):
+def local_range_df(columnData, dataPoint, columnLength: int, windowSize) -> tuple[pd.DataFrame, int]:
     '''Function to create a smaller range of data around a point'''
     windowSplit = round(windowSize/2)
 
