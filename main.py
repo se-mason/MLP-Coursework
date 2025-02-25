@@ -1,5 +1,5 @@
 # Main run file for the program
-from old_files.excel_import import data_import
+from excel_import import data_import
 from reading_and_writing import column_names, read_data, write_data, read_dictionary
 from data_cleaning import iqr_calculator, extreme_value_remover
 from matplotlib_plotting import scatter_plot
@@ -22,7 +22,7 @@ replacementRange = 6
 
 
 pdfPath = f'plots/iqr{iqrWeight}_sd{sdWeight},ws{windowSize}_rr{replacementRange}.pdf'
-
+#pdfPath = 'plots/outliers_excluded.pdf'
 
 # import into database
 data_import(dataBase, dataTable, excelFile)
@@ -45,6 +45,7 @@ with PdfPages(pdfPath) as pdfFile:
 
         # remove extreme values
         columnData, removedCount, removedDict = extreme_value_remover(columnData, columnName, EXdeviationWeight, removedCount, removedDict)
+        #scatter_plot([columnData], columnName, pdfFile, ['b'])
 
         # iterate through data
         for dataPoint in columnData.itertuples():
@@ -53,7 +54,7 @@ with PdfPages(pdfPath) as pdfFile:
             columnData, removedCount, removedDict, updatedDict = dc.bounds_check_and_replace(columnData, columnName, dataPoint, iqrWeight, sdWeight, windowSize, removedCount, removedDict, updatedDict)
 
         # Replace outliers with accurate data
-        removedDict, updatedDict = dc.point_creator(columnData, columnName, replacementRange, removedDict, updatedDict)
+        removedDict, updatedDict = dc.simple_moving_average(columnData, columnName, replacementRange, removedDict, updatedDict)
 
         # Plot data
         # Removed data

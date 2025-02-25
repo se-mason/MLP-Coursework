@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def local_range_df(columnData, dataPoint, columnLength: int, windowSize) -> tuple[pd.DataFrame, int]:
+def local_range_df(columnData:pd.DataFrame, dataPoint:tuple, columnLength:int, windowSize:int) -> pd.DataFrame:
     '''Function to create a smaller range of data around a point'''
     windowSplit = round(windowSize/2)
 
@@ -22,27 +22,24 @@ def local_range_df(columnData, dataPoint, columnLength: int, windowSize) -> tupl
     # Create a range of the data around the point
     localData = columnData.loc[start:end]
 
-    # Window size may vary, so return the differnece in start and end points
-    windowLength = end - start
-
-    return localData, windowLength
+    return localData
 
 
-def standard_deviation_calculator(columnData, columName, deviationWeight):
+def standard_deviation_calculator(columnData:pd.DataFrame, columnName:str, deviationWeight:int) -> tuple[float, float]:
     '''Function to calculate the standard deviation of a range of data'''
 
     # Calculate the mean and standard deviation of the DataFrame
-    deviation = columnData[columName].std(axis=0, skipna=True, numeric_only=True, ddof=1)
-    average = columnData[columName].mean(axis=0, skipna=True, numeric_only=True)
+    deviation = columnData[columnName].std(axis=0, skipna=True, numeric_only=True, ddof=1)
+    average = columnData[columnName].mean(axis=0, skipna=True, numeric_only=True)
 
     # Calculate the upper and lower bounds
     lowerBound = average - (deviationWeight * deviation)
     upperBound = average + (deviationWeight * deviation)
 
-    return lowerBound, upperBound, average
+    return lowerBound, upperBound
 
 
-def iqr_calculator(columnData, columnName, deviationWeight):
+def iqr_calculator(columnData: pd.DataFrame, columnName: str, deviationWeight: int) -> tuple[float, float]:
     '''Function to calculate the IQR of a range of data'''
 
     # Calculate the IQR of the range
@@ -77,7 +74,7 @@ def bounds_check_and_replace(columnData, columnName, dataPoint, iqrWeight, sdWei
     columnLength = len(columnData)
     
     # Get the local range of data around the point
-    localData, windowLength = local_range_df(columnData, dataPoint, columnLength, windowSize)
+    localData = local_range_df(columnData, dataPoint, columnLength, windowSize)
     
     # Get the bounds for the data point
     if dataType[columnName] == 'Rain-Fall':
@@ -85,7 +82,7 @@ def bounds_check_and_replace(columnData, columnName, dataPoint, iqrWeight, sdWei
         lowerBound, upperBound = iqr_calculator(localData, columnName, iqrWeight)
     else:
         '''If the data is flow rate data, use the standard deviation bounds'''
-        lowerBound, upperBound, average = standard_deviation_calculator(localData, columnName, sdWeight)
+        lowerBound, upperBound = standard_deviation_calculator(localData, columnName, sdWeight)
 
     # Check if the data point is an outlier
     if not (lowerBound <= dataPoint[2] <= upperBound):
@@ -128,7 +125,7 @@ def extreme_value_remover(columnData, columnName, deviationWeight, removedCount,
     return columnData, removedCount, removedDict
 
  
-def point_creator(columnData, columnName, windowSize, removedDict, updatedDict):
+def simple_moving_average(columnData:pd.DataFrame, columnName:str, windowSize:int, removedDict:dict, updatedDict:dict) -> tuple[dict, dict]:
     '''Function to update empty points in the dataset'''
 
     # Find all NaN values in the column
@@ -139,15 +136,15 @@ def point_creator(columnData, columnName, windowSize, removedDict, updatedDict):
         '''Iterate through the empty points in the DataFrame'''
 
         # Get the local range of data around the point
-        localData, windowLength = local_range_df(columnData, point, len(columnData), windowSize)
+        localData = local_range_df(columnData, point, len(columnData), windowSize)
 
         # Calculate the average of the range
-        average = round(localData[columnName].mean(),)
+        average = round(localData[columnName].mean(skipna=True),)
 
         # Update the statistics
         removedDict[columnName][point[1]].append(float(average))
 
-        # For visualisation purposes, store the updated data in seperate dictionary
+        # For visualisation purposes, store some of the updated data in separate dictionary
         try:
             updatedDict[columnName][point[1]].append(float(average))
         except:

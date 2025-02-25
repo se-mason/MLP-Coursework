@@ -1,9 +1,10 @@
 import pandas as pd
+import numpy as np
 import sqlite3 
 from sqlalchemy import create_engine
-import numpy as np
 
-def data_import(dataBase, dataTable, excelFile):
+
+def data_import(dataBase: pd.DataFrame, dataTable: str, excelFile: str):
     '''Function for importing Excel data into a database'''
 
     # Read the excel file and store the data in a DataFrame

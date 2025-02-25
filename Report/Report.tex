@@ -3,10 +3,63 @@
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage[a4paper, margin=0.5in]{geometry}
+\usepackage{xcolor}
+\usepackage{newtxmath}
+\usepackage{tcolorbox}
+\usepackage{float}
+\usepackage{chngcntr}
+
+\counterwithin{figure}{section}
 
 \title{Predicting flow with Back Propagation Neural Networks}
 \author{F328799}
 \date{}
+
+% Define the code style %
+\definecolor{codegreen}{HTML}{3d405b}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{HTML}{e07a5f} 
+\definecolor{keycolour}{HTML}{81b29a}
+
+\definecolor{contextback}{HTML}{f1faee}
+\definecolor{contextframe}{HTML}{81b29a}
+
+
+
+\lstdefinestyle{codeStyle}{
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{keycolour},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize\fontfamily{ptm}\selectfont,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=codeStyle}
+
+\tcbset{
+    contextnote/.style={
+        colback=contextback, % Background color
+        colframe=contextframe, % Border color
+        fonttitle=\bfseries, % Title font
+        coltitle=black, % Title color
+        colbacktitle=yellow!50!white, % Title background color
+        coltext=black, % Text color
+        fontupper=\itshape, % Italic text
+        boxrule=0.5mm, % Border thickness
+        arc=1mm, % Rounded corners
+    }
+}
+
 
 \begin{document}
 \maketitle
@@ -16,11 +69,11 @@
 \setcounter{chapter}{-1} % start chapter numbering at 0 %
 \chapter{Outline} % explain the aims of the project %
 The aim of this project is to predict the flow-rate of the River Ouse at Skelton in advance to predict the flood potential.
-We will use a Back Propagation Neural Network to predict the flow-rate of the river, using data from the suppoudning catchment area.
+We will use a Back Propagation Neural Network to predict the flow-rate of the river, using data from the surrounding catchment area.
 This data includes river flow-rate from Skip Bridge, Crakehill and Westwick, as well as rainfall data from East Cowton, Arkengarthdale, Snaizeholme and Malham Tarn.
 The data was collected between 01/01/1993 to 31/12/1996.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{images/river_ouse.jpg} % Replace with the correct path to your image
     \caption{River Ouse Catchment}
@@ -52,29 +105,56 @@ The data will be split into training and testing data, with 60\% of the data use
 
 
 \chapter{Data Pre-processing}
-\section{Importing and extreme outliers}
+\section{Importing data}
 
 The first step is to import the data from the give xlsx file into the database.
 This will be done using the pandas library to read the data from the xlsx file and then using the sqlalchemy library to write the data to the database.
 For simplicity, I created a second xlsx file without the first row of headers, this is so that the data can be read into the database without any issues.
 \vspace{1em}
 \newline
-This code snippit shows how I handled the non-numerical data in the xlsx file.
+This code shows how I handled the non-numerical data in the xlsx file.
 It is then imported into the database using the sqlalchemy library.
-Full code will be enlcosed in the accompanying files. % change code to na %
+Line 16 is used to remove non-numerical data when importing into the database.
+This is to avoid any type-errors when the create\_engine creates the dataBase.
 \begin{lstlisting}[language=Python] 
-excel_to_db.py
-import pandas as pd
-import numpy as np
-from sqlalchemy import create_engine
+excel_import.py
 
-# Read the excel file and store the data in a DataFrame
-data = pd.read_excel('xlsx/Data-NoHeads.xlsx')
+    import pandas as pd
+    import numpy as np
+    import sqlite3 
+    from sqlalchemy import create_engine
+    
+    
+    def data_import(dataBase:pd.DataFrame, dataTable:str, excelFile:str):
+        '''Function for importing Excel data into a database'''
 
-# Check for non-numeric values in non-first columns and replace them with na values
-data.iloc[:, 1:] = data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(np.nan)
+        # Read the excel file and store the data in a DataFrame
+        excelFile = pd.read_excel(excelFile)
+
+        # Check for non-numeric values in non-first columns and replace them with na points
+        excelFile.iloc[:, 1:] = excelFile.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(np.nan)
+
+        # Create a connection to the SQLite database (or create it if it doesn't exist)
+        conn = sqlite3.connect(dataBase)
+        cursor = conn.cursor()
+
+        # Drop the table if it exists so the database can be recreated from scratch for testing
+        cursor.execute(f'DROP TABLE IF EXISTS {dataTable}')
+
+        # Use SQLAlchemy to import the DataFrame into the SQL database
+        engine = create_engine(f'sqlite:///{dataBase}')
+        excelFile.to_sql(dataTable, engine, if_exists='replace', index=False)
+
+        # Commit the changes and close the connection
+        conn.commit()
+        conn.close()
+        print('Data imported successfully!')
+
 \end{lstlisting}
+All code will be enclosed in the additional files included 
 \vspace{1em}
+
+\section{Extreme Outliers}
 Using the database as a source of data, we can now begin to pre-process the data.
 Using matplotlib, we can plot the data to see if there are any trends or patterns in the data,
 along with any outliers that may need to be removed.
@@ -82,12 +162,12 @@ along with any outliers that may need to be removed.
 \vspace{1em}
 In the given dataset, there were a number of values that were not possible, such as negative flow rates and rainfall values in the thousands.
 These values need to be removed from the dataset to ensure the model is accurate.
-To remove these and other 'extreme' outliers, I used the interquartile range (IQR) method.
+To remove these and other 'extreme' outliers, I used the inter-quartile range (IQR) method.
 When I implemented this, I used a variable to multiply by the IQR to get the upper and lower bounds, allowing me to refine the data to a point I thought was acceptable.
 
 \vspace{1em}
-A tpycical wieght for extreme values is 3, this is because the IQR is the range between the 25th and 75th percentile, so multiplying by 3 gives a range of 99.7\% of the data.
-However, as the data is skewed heavily towards 0, the 75th percentile still encapuslates a large amount of possible data within a wide range.
+A typical weight for extreme values is 3, this is because the IQR is the range between the 25th and 75th percentile, so multiplying by 3 gives a range of 99.7\% of the data (when its normally distributed).
+However, as the data is skewed heavily towards 0, the 75th percentile still encapsulates a large amount of possible data within a wide range.
 After experimenting with different values, the results were as follows:
 
 \begin{table}[h]
@@ -109,31 +189,296 @@ After experimenting with different values, the results were as follows:
 From testing, I decided that 10 was the best weight to use, as it removed the most extreme values without removing too much data.
 The remaining data looks real and is within a reasonable range for realistic rainfall and flow rates.
 
-\section{Averging and Deviations}
+\section{Averaging and Deviations}
 
 The data has had its extreme outliers removed, but it is still not in a usable state.
 The data needs to be averaged and standardised to ensure that the data is in a usable state for the neural network.
 
-Our IQR with extreme weighting method does not account for large amount of rainfall in a dry spell, or low flow rate at a time of flooding.
-To account for this, we will use methods to determine if the data is within a reasonable range, over a period of time.
-
-\vspace{1em}
-Flow rate of a river rises and falls in patterns, so to best catch outliers we will use a mean and standard deviation over a period of time.
-This method determines if the data follows the trend of its neighbors, and if it does not, it is removed from the dataset.
-One day of high flow rate isn't a realisic measurement as the river constantly flows.
+\begin{tcolorbox}[contextnote]
+    For context:
+These functions are called within an iterative loop that acts on them for each of the columns in the database.
+columnData is a pandas data frame of the date with that dates record.
 \vspace{1em}
 \newline
+The data points are uniformly iterated with columnData.itertuples(), hence the use of the point[n] convention to access the data.
+\vspace{1em}
+\newline
+When a data point is removed, it is stored in a dictionary object, with the key being the column name and the value being a dictionary of the removed data points.
+All code will be enclosed in the additional files included.
+\end{tcolorbox}
+\vspace{1em}
+Our IQR with extreme weighting method does not account for large amount of rainfall in a dry spell, or low flow rate at a time of flooding.
+To account for this, we will use methods to determine if the data is within a reasonable range, over a period of time.
+\vspace{1em}
+\newline
+Rainfall and especially flow rate data move in trends, so to best capture the data we will use a condensed version of the data, with only its neighbors.
+We will calculate our outliers over this as rainfall in summer will not be as high as in winter (it's still England though), so calculating the averages of the whole data set will not be accurate.
+\begin{lstlisting}[language=Python]
+data_cleaning.py
 
+    import numpy as np
+    import pandas as pd
+
+    def local_range_df(columnData:pd.DataFrame, dataPoint:tuple, columnLength:int, windowSize:int) -> pd.DataFrame:
+        '''Function to create a smaller range of data around a point'''
+        windowSplit = round(windowSize/2)
+
+        # Defines the start and end of the range
+        if int(dataPoint[0])-windowSplit < 0:
+            '''If the point is close to 0'''
+            start = 0
+            end = windowSize-int(dataPoint[0])
+        elif int(dataPoint[0])+windowSplit > columnLength:
+            '''If the point is close to the end of the DF'''
+            end = columnLength
+            start = columnLength - windowSize
+        else:
+            '''If the point is in the middle of the DF'''
+            start = int(dataPoint[0])-windowSplit
+            end = int(dataPoint[0])+windowSplit
+
+        # Create a range of the data around the point
+        localData = columnData.loc[start:end]
+
+        return localData
+\end{lstlisting}
+We will pass this local data to the standard deviation and IQR functions to calculate the upper and lower bounds of the data.
+\vspace{1em}
+\newline
+Flow rate of a river rises and falls in patterns, so to best catch outliers we will use a mean and standard deviation over a period of time.
+\begin{lstlisting}[language=Python] 
+data_cleaning.py
+
+    import numpy as np
+    import pandas as pd
+
+    def standard_deviation_calculator(columnData:pd.DataFrame, columnName:str, deviationWeight:int) -> tuple[float, float]:
+        '''Function to calculate the standard deviation of a range of data'''
+
+        # Calculate the mean and standard deviation of the DataFrame
+        deviation = columnData[columnName].std(axis=0, skipna=True, numeric_only=True, ddof=1)
+        average = columnData[columnName].mean(axis=0, skipna=True, numeric_only=True)
+
+        # Calculate the upper and lower bounds
+        lowerBound = average - (deviationWeight * deviation)
+        upperBound = average + (deviationWeight * deviation)
+
+        return lowerBound, upperBound
+
+
+\end{lstlisting}
+This method determines if the data follows the trend of its neighbors, and if it does not, it is removed from the dataset.
+One day of high flow rate isn't a realistic measurement as the river constantly flows.
+\vspace{1em}
+\newline
 However, rainfall can be more sporadic, so we will once again use a weighted IQR method to remove extreme values.
+\begin{lstlisting}[language=Python] 
+data_cleaning.py
+    
+    import numpy as np
+    import pandas as pd
+
+    def iqr_calculator(columnData:pd.DataFrame, columnName:str, deviationWeight:int) -> tuple[float, float]:
+        '''Function to calculate the IQR of a range of data'''
+
+        # Calculate the IQR of the range
+        Q1 = columnData[columnName].quantile(0.25)
+        Q3 = columnData[columnName].quantile(0.75)
+        IQR = Q3 - Q1
+
+        # Calculate the upper and lower bounds, round to 3 decimal places
+        lowerBound = round(Q1 - (deviationWeight * IQR), 3)
+        upperBound = round(Q3 + (deviationWeight * IQR), 3)
+
+        return lowerBound, upperBound
+
+        
+\end{lstlisting}
 This will be done over a period of time, as a single day of high rainfall is possible in a storm, before a low rainfall spell occurs again.
 By splitting the data this way we allow the more accurate flow rate data to be used in the model, while still allowing for the sporadic nature of rainfall.
-
-% code %
-
+\vspace{1em}
+\newline
 Once the data points have been removed from the dataset, we can replace them with the average of the surrounding data points.
 This is to ensure that the data is continuous and that the model can be trained on the data.
 
-% code %
+\section{Interpolation}
+
+When the algorithm removes the data points, it leaves gaps in the data.
+I made this decision to separate the extraction and interpolation for two reasons:
+\begin{enumerate}
+    \item To allow for efficiency of interpolation
+    \item For accuracy, as im only using the data points that were recorded, not interpolated
+\end{enumerate}
+
+To interpolate the data, I used a simple moving average (SMA) method to fill the gaps.
+I implemented this with a variable window size for the SMA to allow for flexibility in the data.
+The numpy array allows for skipping of NaN values, so the data can be interpolated in places where I have removed the data points.
+However, too small of a window size ends up with a variation of a forward fill at points with data removed.
+I decided that a window size of 6 was the best for the data, allowing for trends to show without ending up with a forward fill.
+
+\begin{lstlisting}[language=Python]
+data_cleaning.py
+ 
+    import numpy as np
+    import pandas as pd
+
+    def simple_moving_average(columnData:pd.DataFrame, columnName:str, windowSize:int, removedDict:dict, updatedDict:dict) -> tuple[dict, dict]:
+        '''Function to update empty points in the dataset'''
+
+        # Find all NaN values in the column
+        emptyPoints = columnData[columnData[columnName].isna()]
+
+        # Iterate through the empty points
+        for point in emptyPoints.itertuples():
+            '''Iterate through the empty points in the DataFrame'''
+
+            # Get the local range of data around the point
+            localData = local_range_df(columnData, point, len(columnData), windowSize)
+
+            # Calculate the average of the range
+            average = round(localData[columnName].mean(skipna=True),)
+
+            # Update the statistics
+            removedDict[columnName][point[1]].append(float(average))
+
+            # For visualisation purposes, store some of the updated data in separate dictionary
+            try:
+                updatedDict[columnName][point[1]].append(float(average))
+            except:
+                None
+
+            # Replace the empty point with the average
+            columnData.loc[point[0], columnName] = average
+
+        return removedDict, updatedDict
+\end{lstlisting}
+The outputs of this function are two dictionary objects.
+As explained in the context note, the dictionary is used to store the data points that were removed from the dataset.
+Both of them are the same, except updatedDict is used for visualisation purposes.
+As the extreme values are present in the removedDict, when plotted they skew the graph so you can't see the trends in the data.
+\vspace{1em}
+\newline
+I then go on to use the updatedDict to plot the data, showing the trends in the data, along with the removed data and the ones that replaced it.
+This is to show the accuracy of the interpolation and to show the trends in the data.
+The removedDict is used to update the SQL database, so the data can be used in the neural network; we need a record of data that was changed to be able to update it as updating the whole dataBase is costly and slow.
+
+\section{Plotting trends}
+Once the data has been cleaned and interpolated, we can plot the data to see the trends in the data.
+We can also make judgments on the variables that determine which point are outliers and which are not.
+
+Lets use the data at Crakehill as an example location for visualisation:
+\vspace{1em}
+\newline
+Figure 1.5.1 show us the data at Crakehill, with the unrealistic data present.
+As I stated before, the data scale is affected by the outliers, so the trends in the data are not visible.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/CH_outliers.png}
+    \caption{Crakehill Data with unrealistic data}
+    \label{fig:Crakehill_outliers}
+\end{figure}
+\vspace{1em}
+Figure 1.5.2 shows the data at Crakehill, with the unrealistic data points removed, but still containing outliers
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/CH_no_outliers.png} 
+    \caption{Crakehill Data without unrealistic data}
+    \label{fig:Crakehill_no_outliers}
+\end{figure}
+\vspace{1em}
+Finally, figure 1.5.3 shows us the result of our interpolation, with the data points that were removed and replaced.
+Blue points are the data we are using, red points are the data that was removed and green being what replaced them.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/CH_interploated_1.png}
+    \caption{Crakehill Data interpolated}
+    \label{fig:Crakehill_interpolated_1}
+\end{figure}
+This specific figure has:
+\begin{itemize}
+    \item IQR weight of 1.5
+    \item Standard deviation weight of 2
+    \item Window size of 10 for removal
+    \item Window size of 6 for interpolation
+    \item 91 data points removed and replaced (992 across all locations)
+\end{itemize}
+When looking at figure 1.5.2, we can see that in 1993, the flow rate data was much more sporadic than the following years, then in figure 1.5.3, the data is clearly less sporadic and follows the trends more closely.
+This data should now be considered usable to train our Multi-Layer Perceptron (MLP) model.
+The database can now be updated with the new data.
+
+\section{Correlation}
+% Correlation between the data points %
+% heatmaps %
+
+\chapter{Implementing the Neural Network}
+\section{Back propagation}
+\subsection{Forward Pass}
+For $n$ inputs and $m$ hidden layers
+
+\begin{equation}
+    \text{Matrix }\mathbf{I}\rightarrow \left[1\times n\right] : \mathbf{I} = 
+        \begin{vmatrix}
+        \mathbf{I}_1 ,& \mathbf{I}_2 ,&\cdots, & \mathbf{I}_n
+        \end{vmatrix}
+\end{equation}
+
+\begin{equation}
+    \text{Matrix }\omega\rightarrow \left[n\times m\right] : \omega = 
+        \begin{vmatrix}
+        \omega_{11} ,& \omega_{12} ,&\cdots, & \omega_{1m} \\
+        \omega_{21} ,& \ddots & & \omega_{2m} \\
+        \vdots  & &\ddots & \vdots  \\
+        \omega_{n1} ,& \omega_{n2} ,&\cdots, & \omega_{nm} \\\
+        \end{vmatrix}
+\end{equation}
+
+\begin{equation}
+    \text{Matrix }\mathbf{I}\cdot\omega\rightarrow \left[1\times n\right]\cdot\left[n\times m\right]\rightarrow \left[1\times m\right]: \mathbf{I} = \cdot\omega
+        \begin{vmatrix}
+        \mathbf{I}_1\cdot\omega_{11} + \cdots +  \mathbf{I}_n\cdot\omega_{n1} ,& \cdots, \mathbf{I}_m\cdot\omega_{1m} + \cdots +  \mathbf{I}_n\cdot\omega_{nm}
+        \end{vmatrix}
+\end{equation}
+
+\begin{equation}
+    \text{Matrix }\beta\rightarrow \left[1\times m\right] : \beta  = 
+        \begin{vmatrix}
+            \beta_1 ,& \beta_2 ,&\cdots, & \beta_m
+        \end{vmatrix}
+\end{equation}
+
+\begin{equation}
+    \text{Matrix }\alpha\rightarrow \left[1\times m\right] : \beta  = 
+    \mathcal{F}_1(\mathbf{I}\cdot\omega + \beta)
+\end{equation}
+
+\begin{equation}
+    \text{Matrix }\mu\rightarrow \left[m\times 1\right] : \mu  = 
+        \begin{vmatrix}
+            \mu_1 \\ \mu_2 \\ \vdots \\ \mu_m
+        \end{vmatrix}
+\end{equation} 
+
+\begin{equation}
+    \text{Matrix }\alpha\cdot\mu\rightarrow \left[1\times m\right]\cdot\left[m\times 1\right]\rightarrow \left[1\times 1\right] : \alpha\cdot\mu  = 
+        \begin{vmatrix}
+            \alpha_{1}\cdot\mu_{1} + \cdots +  \alpha_{m}\cdot\mu_{m} 
+        \end{vmatrix}
+\end{equation} 
+
+\begin{equation}
+    \text{Matrix }\rho \rightarrow \left[1\times 1\right] : \rho  = 
+        \begin{vmatrix}
+            \rho
+        \end{vmatrix}
+\end{equation} 
+
+\begin{equation}
+    \text{Output }\rightarrow \left[1\times 1\right] : \text{Output}  = 
+    \mathcal{F}_2(\alpha\cdot\mu + \rho)
+\end{equation}
+
+
 
 \end{document}
  
