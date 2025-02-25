@@ -416,7 +416,7 @@ The database can now be updated with the new data.
 \chapter{Implementing the Neural Network}
 \section{Back propagation}
 \subsection{Forward Pass}
-For $n$ inputs and $m$ hidden layers
+For $n$ inputs and $m$ hidden nodes, 1 hidden layer and $q$ output nodes
 
 \begin{equation}
     \text{Matrix }\mathbf{I}\rightarrow \left[1\times n\right] : \mathbf{I} = 
@@ -446,7 +446,7 @@ For $n$ inputs and $m$ hidden layers
     \text{Matrix }\beta\rightarrow \left[1\times m\right] : \beta  = 
         \begin{vmatrix}
             \beta_1 ,& \beta_2 ,&\cdots, & \beta_m
-        \end{vmatrix}
+        \end{vmatrix}s
 \end{equation}
 
 \begin{equation}
@@ -455,28 +455,31 @@ For $n$ inputs and $m$ hidden layers
 \end{equation}
 
 \begin{equation}
-    \text{Matrix }\mu\rightarrow \left[m\times 1\right] : \mu  = 
+    \text{Matrix }\mu\rightarrow \left[m\times q\right] : \mu  = 
         \begin{vmatrix}
-            \mu_1 \\ \mu_2 \\ \vdots \\ \mu_m
+            \mu_{11}, &\mu_{22}, &\cdots,& \mu_{1q} \\
+            \mu{21} ,& \ddots & & \mu{2q} \\
+            \vdots  & &\ddots & \vdots  \\
+            \mu{m1} ,& \mu{m2} ,&\cdots, & \mu{mq} \\\
         \end{vmatrix}
 \end{equation} 
 
 \begin{equation}
-    \text{Matrix }\alpha\cdot\mu\rightarrow \left[1\times m\right]\cdot\left[m\times 1\right]\rightarrow \left[1\times 1\right] : \alpha\cdot\mu  = 
+    \text{Matrix }\alpha\cdot\mu\rightarrow \left[1\times m\right]\cdot\left[m\times q\right]\rightarrow \left[1\times q\right] : \alpha\cdot\mu  = 
         \begin{vmatrix}
-            \alpha_{1}\cdot\mu_{1} + \cdots +  \alpha_{m}\cdot\mu_{m} 
+            \alpha_{1}\cdot\mu_{11} + \cdots +  \alpha_{m}\cdot\mu_{m1}, & \cdots, \alpha_{1}\cdot\mu_{1q} + \cdots +  \alpha_{m}\cdot\mu_{mq}
         \end{vmatrix}
 \end{equation} 
 
 \begin{equation}
-    \text{Matrix }\rho \rightarrow \left[1\times 1\right] : \rho  = 
+    \text{Matrix }\rho \rightarrow \left[1\times q\right] : \rho  = 
         \begin{vmatrix}
-            \rho
+            \rho_1, & \rho_2, & \cdots & \rho_q
         \end{vmatrix}
 \end{equation} 
 
 \begin{equation}
-    \text{Output }\rightarrow \left[1\times 1\right] : \text{Output}  = 
+    \text{Output }\rightarrow \left[1\times q\right] : \text{Output}  = 
     \mathcal{F}_2(\alpha\cdot\mu + \rho)
 \end{equation}
 
