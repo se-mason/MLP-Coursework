@@ -360,8 +360,10 @@ As the extreme values are present in the removedDict, when plotted they skew the
 \newline
 I then go on to use the updatedDict to plot the data, showing the trends in the data, along with the removed data and the ones that replaced it.
 This is to show the accuracy of the interpolation and to show the trends in the data.
-The removedDict is used to update the SQL database, so the data can be used in the neural network; we need a record of data that was changed to be able to update it as updating the whole dataBase is costly and slow.
-
+The removedDict is used to update the SQL database, so the data can be used in the neural network; we need a record of data that was changed to be able to update it.
+If we instead saved it to the data frame, we would lose the location of updated data points.
+This would result in updating the whole database with the whole data frame, wasting a lot of time and resources replacing points with values they already have.
+The database has 11,688 data points, with 992 (for variables stated in figure 1.5.2) removed and replaced. That's 8.5\% of the data and more than 10 times more efficient only updating those.
 \section{Plotting trends}
 Once the data has been cleaned and interpolated, we can plot the data to see the trends in the data.
 We can also make judgments on the variables that determine which point are outliers and which are not.
