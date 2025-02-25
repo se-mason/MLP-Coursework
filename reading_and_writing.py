@@ -26,7 +26,7 @@ def column_names(dataBase, dataTable):
 
 
 def read_data(dataBase, dataTable, columnName):
-    '''Fucntion for retreiving column data from a database, and returning a dataframe'''
+    '''Function for retrieving column data from a database, and returning a dataframe'''
     # Connect to the SQLite database
     conn = sql.connect(dataBase)
     cursor = conn.cursor()
@@ -49,6 +49,31 @@ def read_data(dataBase, dataTable, columnName):
 
     # Return the data
     return columnData
+
+def read_data_all(dataBase, dataTable):
+    '''Function for retrieving all column data from a database, and returning a dataframe'''
+    # Connect to the SQLite database
+    conn = sql.connect(dataBase)
+    cursor = conn.cursor()
+
+    # Define the SQL query to select all rows from a specific column
+    query = f'SELECT * FROM {dataTable} WHERE DATE < "1995-01-01"'
+
+    # Execute the query and fetch all results
+    cursor.execute(query)
+    rowData = cursor.fetchall()
+
+    # Convert the results to a pandas DataFrame
+    dataBase = pd.DataFrame(rowData, columns=['DATE', 'Crakehill', 'Skip Bridge', 'Westwick', 'Skelton', 'Arkengarthdale', 'East Cowton', 'Malham Tarn', 'Snaizeholme'])
+
+    # Convert the 'DATE' column to datetime format
+    dataBase['DATE'] = pd.to_datetime(dataBase['DATE'])
+
+    # Close the connection
+    conn.close()
+
+    # Return the data
+    return dataBase
 
 
 def write_data(dataBase, dataTable, columnName, dataPoints):

@@ -1,8 +1,15 @@
 # back Propogation algorithm
 import numpy as np
+import pandas as pd
+from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib_plotting import line_plot, scatter_plot
+import reading_and_writing as rw
+from scipy.special import expit
 
-perceptronStructure = (2,[(2,'sigmoid'),(3,'sigmoid'),(2,'sigmoid'), (1, 'sigmoid')])
+perceptronStructure = (4,[(6,'sigmoid'), (1, 'sigmoid')])
 learningRate = 0.1
+epochs = 100
+
 
 #re do this bit for sure
 
@@ -12,7 +19,7 @@ def get_activation_function(name):
     """
     activations = {
         "relu": lambda x: np.maximum(0, np.asarray(x)),  
-        "sigmoid": lambda x: 1 / (1 + np.exp(-np.asarray(x))),  
+        "sigmoid": expit,  
         "tanh": lambda x: np.tanh(np.asarray(x)),  
         "linear": lambda x: np.asarray(x),  
         "softmax": lambda x: np.exp(np.asarray(x)) / np.sum(np.exp(np.asarray(x)))  
@@ -26,7 +33,7 @@ def get_activation_derivative(name):
     """
     derivatives = {
         "relu": lambda x: np.where(x > 0, 1, 0),  # Derivative of ReLU
-        "sigmoid": lambda x: (s := 1 / (1 + np.exp(-x))) * (1 - s),  # Sigmoid derivative: s * (1 - s)
+        "sigmoid": lambda x: (s := expit(x)) * (1 - s),  # Sigmoid derivative: s * (1 - s)
         "tanh": lambda x: 1 - np.tanh(x) ** 2,  # Derivative of tanh: 1 - tanh^2(x)
         "linear": lambda x: np.ones_like(x),  # Derivative of linear (identity) function is 1
         "softmax": lambda x: (s := np.exp(x) / np.sum(np.exp(x))) * (1 - s)  # Softmax derivative (simplified)
@@ -41,18 +48,18 @@ def init_structure(perceptronStructure):
     weightsList = []
     biasList = []
 
-    inputWeightMatrix = np.random.uniform(1, 1, (perceptronStructure[0], perceptronStructure[1][0][0]))
+    inputWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[0], perceptronStructure[1][0][0]))
     weightsList.append(inputWeightMatrix)
 
-    inputBiasMatrix = np.random.uniform(1, 1, (1, perceptronStructure[1][0][0]))
+    inputBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[1][0][0]))
     biasList.append(inputBiasMatrix)
 
     for i in range(1, len(perceptronStructure[1])):
-        hiddenWeightMatrix = np.random.uniform(1, 1, (perceptronStructure[1][i-1][0], perceptronStructure[1][i][0]))
+        hiddenWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[1][i-1][0], perceptronStructure[1][i][0]))
         weightsList.append(hiddenWeightMatrix)
 
 
-        hiddenBiasMatrix = np.random.uniform(1, 1, (1, perceptronStructure[1][i][0]))
+        hiddenBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[1][i][0]))
         biasList.append(hiddenBiasMatrix)
 
     return (weightsList, biasList)
@@ -111,24 +118,82 @@ def backward_pass(nodeValues, weightsAndBiases, dataOutput, learningRate, percep
 
     for i in range(0, len(nodeValues)):
         matrixPosition = (-(i+1))
-        # get the current working matrix 
+        # get the matrices for the current layer
         workingMatrix = nodeValues[matrixPosition]
         workingWeights = weightsList[matrixPosition]
+        workingBias = biasList[matrixPosition]
         currentStructure = perceptronStructure[1][matrixPosition]
-
+        # calculate the delta function
         delta = delta_function(workingMatrix, currentStructure, dataOutput, learningRate)
-        print(f'delta function: {delta} for pos {matrixPosition}')
-        # back pass algor
+
+        # calculate the update matrices
+        updateWeightMatrix = learningRate * workingMatrix * delta
+        updateBiasMatrix = learningRate * delta
+
+        # repeat the rows to math to the correct shape
+        np.repeat(updateWeightMatrix, workingWeights.shape[0], axis=0)
+        np.repeat(updateBiasMatrix, workingBias.shape[0], axis=0)
+
+        # calculate the updated weights and biases
+        workingWeights -= updateWeightMatrix
+        workingBias -= updateBiasMatrix
+        
+        # update the matrices
+        weightsList[matrixPosition] = workingWeights
+        biasList[matrixPosition] = workingBias
+
+    return (weightsList, biasList)
 
 
+def error_function(dataOutput, nodeValues):
+    '''Calculate the error function'''
+    error = 0.5 * np.sum((dataOutput - nodeValues[-1]) ** 2)
+    return error
 
 
-test_data = np.random.uniform(2,2, (1, 2))
-print(test_data)
+dataBase = rw.read_data_all('dataSet.db', 'data_table')
 
+# Initialize an empty DataFrame to store errors
+errorDF = pd.DataFrame(columns=['epoch', 'error'])
+predictionDF = pd.DataFrame(columns=['DATE', 'prediction'])
+
+# Initialize the weights and biases
 weightsAndBiases = init_structure(perceptronStructure)
 
-nodeValues = (forward_pass(test_data, weightsAndBiases, perceptronStructure))
-print(nodeValues)
-dataOutput = (3)
-backward_pass(nodeValues, weightsAndBiases, dataOutput, learningRate, perceptronStructure)
+for epoch in range(epochs):
+    for i, day in enumerate(dataBase.itertuples(index=False), start=0):
+        # No errors for our of range datapoints (first and last)
+        if (i == 0 or i == len(dataBase)-1):
+            continue
+
+        # Get the previous and next day
+        prevDay = tuple(dataBase.iloc[i - 1])
+        nextDay = tuple(dataBase.iloc[i + 1])
+        inputData = np.array([float(day[2]), float(day[4]), float(prevDay[8]), float(prevDay[5])])
+        outputData = np.array(nextDay[4]) 
+
+        # forward pass
+        nodeValues = forward_pass(inputData, weightsAndBiases, perceptronStructure)
+
+        # backward pass
+        weightsAndBiases = backward_pass(nodeValues, weightsAndBiases, outputData, learningRate, perceptronStructure)
+
+        newPrediction = pd.DataFrame({'DATE': [nextDay[0]], 'Skelton': [nextDay[4]]})
+        predictionDF = pd.concat([predictionDF, newPrediction], ignore_index=True)
+
+    # calculate the error
+    error = error_function(outputData, nodeValues)
+
+    # Append the error to the DataFrame
+    newError = pd.DataFrame({'epoch': [epoch], 'error': [error]})
+    errorDF = pd.concat([errorDF, newError], ignore_index=True)
+
+    print(f'Epoch: {epoch}, Error: {error}')
+
+actualDF = dataBase[['DATE', 'Skelton']]
+
+
+with PdfPages('plots/error_vs_epochs.pdf') as pdf:
+    line_plot(errorDF, pdf)
+    scatter_plot([actualDF, predictionDF], 'Skelton', pdf, ['b', 'r'])
+
