@@ -3,12 +3,11 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot
 import reading_and_writing as rw
-from scipy.special import expit
 import matplotlib.pyplot as plt
 
 perceptronStructure = (3,[(5,'sigmoid'), (1, 'sigmoid')])
-learningRate = 0.2
-epochs = 100000
+learningRate = 0.25
+epochs = 2000
 
 # testing with sigmoid
 def sigmoid(x):
@@ -149,7 +148,6 @@ errorDF = pd.DataFrame(columns=['epoch', 'error'])
 weightsAndBiases = init_structure(perceptronStructure)
 
 for epoch in range(epochs):
-    predictions = []
     for i, day in enumerate(dataBase.itertuples(index=False), start=0):
         # No errors for our of range datapoints (first and last)
         if i == len(dataBase)-1:
@@ -170,8 +168,6 @@ for epoch in range(epochs):
         # Update the weights and biases
         weightsAndBiases = backward_pass(weightsAndBiases, learningRate)
 
-        predictions.append({'DATE': nextDay[0], 'Skelton': activatedValues[-1][0]})
-
     # Calculate the error
     error = error_function(outputData, activatedValues)
     newError = pd.DataFrame({'epoch': [epoch], 'error': [error]})
@@ -181,7 +177,12 @@ for epoch in range(epochs):
 actualDF = dataBase[['DATE', 'Skelton']]
 
 # Create a DataFrame for the predictions
-predictionDF = pd.DataFrame(predictions)
+dataBase2 = rw.read_data_all2('dataSet.db', 'data_table')
+dataBase2.iloc[:, 1:] = min_max_scaler(dataBase.iloc[:, 1:])
+
+
+
+predictionDF = pd.DataFrame(dataBase2[['DATE', 'Skelton']])
 
 with PdfPages('plots/error_vs_epochs.pdf') as pdf:
     line_plot(errorDF, pdf)

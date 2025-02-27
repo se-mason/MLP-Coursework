@@ -414,16 +414,29 @@ The database can now be updated with the new data.
 % heatmaps %
 
 \chapter{Implementing the Neural Network}
-\section{Back propagation}
-\subsection{Forward Pass}
-For $n$ inputs and $m$ hidden nodes, 1 hidden layer and $q$ output nodes
+The network will be implemented with a back propagation learning algorithm.
+\section{Data Splitting}
+50 25 25
 
+\section{Model Architecture}
+\section{Activation Functions}
+\section{Loss Functions}
+\section{Network with 1 hidden layer}
+The first implementation of the neural network will be a simple 1 hidden layer network.
+This is to refine parameters and theory before applying to multiple nodes and layers.
+
+\subection{Forward Pass}
+For $n$ inputs and $m$ hidden nodes, $q$ output nodes
+
+The input matrix takes the $n$ data points from the training data in the form:
 \begin{equation}
     \text{Matrix }\mathbf{I}\rightarrow \left[1\times n\right] : \mathbf{I} = 
         \begin{vmatrix}
         \mathbf{I}_1 ,& \mathbf{I}_2 ,&\cdots, & \mathbf{I}_n
         \end{vmatrix}
 \end{equation}
+
+
 
 \begin{equation}
     \text{Matrix }\omega\rightarrow \left[n\times m\right] : \omega = 
