@@ -568,13 +568,75 @@ Applying the activation function $\mathcal{F}_2$ to the summation matrix $\mathc
     \mathcal{F}_2(\mathcal{S}^2) = \mathcal{F}_2(\alpha\cdot\mu + \rho)
 \end{equation}
 This gives us our prediction from the forward pass through the network. 
+\vspace{1em}
+\newline
+An example of a network with 1 hidden node is given below:
+\vspace{1em}
+\newline
+\begin{tikzpicture}[
+    net/.style={
+      matrix of nodes,
+      nodes={draw, circle, minimum size=0.75cm},
+      column sep=0.75cm,
+      row sep=10pt
+    },
+    >=latex
+]
+
+  % Define the matrix
+  \matrix[net] (mat) {
+    |[draw=none]| \parbox{1.5cm}{\centering Input\\Layer} & &|[draw=none]| \parbox{1.5cm}{\centering Hidden\\Layer} & &|[draw=none]| \parbox{1.5cm}{\centering Output\\Layer} \\
+    & $\mathcal{S}_{1}^1$  & $\alpha_{1}^1$ \\
+    $I_1$ & \\
+    & $\mathcal{S}_{2}^1$  & $\alpha_{2}^1$ & $\mathcal{S}_{1}^3$  & $\alpha_{1}^3$\\
+    $I_2$ & \\
+    & $\mathcal{S}_{3}^1$  & $\alpha_{3}^1$ \\
+  };
+
+  % input labels
+  \foreach \i [count=\j] in {3,5}
+  \draw[<-] (mat-\i-1.west) -- ++(-1cm,0) node[left] {Input \j};
+
+  % Connections from input to hidden layer 1
+    \draw[->] (mat-3-1) -- (mat-2-2) node[midway, above] {$\omega^{1}_{11}$};
+    \draw[->] (mat-3-1) -- (mat-4-2) node[pos=0.4, above] {$\omega^{1}_{12}$};
+    \draw[->] (mat-3-1) -- (mat-6-2) node[pos=0.075, below] {$\omega^{1}_{13}$};
+    \draw[->] (mat-5-1) -- (mat-2-2) node[pos=0.1, above] {$\omega^{1}_{21}$};
+    \draw[->] (mat-5-1) -- (mat-4-2) node[pos=0.6, above] {$\omega^{1}_{22}$};
+    \draw[->] (mat-5-1) -- (mat-6-2) node[midway, above] {$\omega^{1}_{23}$};
+
+    % Connections from hidden layer 1 to hidden layer 1
+    \draw[->] (mat-2-2) -- (mat-2-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{1}^1)$};
+    \draw[->] (mat-4-2) -- (mat-4-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{2}^1)$};
+    \draw[->] (mat-6-2) -- (mat-6-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{3}^1)$};
+
+    % Connections from hidden layer 1 to output layer
+    \draw[->] (mat-2-3) -- (mat-4-4) node[midway, above] {$\omega^{2}_{11}$};
+    \draw[->] (mat-4-3) -- (mat-4-4) node[midway, above] {$\omega^{2}_{21}$};
+    \draw[->] (mat-6-3) -- (mat-4-4) node[midway, below] {$\omega^{2}_{31}$};
+
+    \draw[->] (mat-4-4) -- (mat-4-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{1}^2)$};
+
+
+    % output labels
+    \foreach \i [count=\j] in {4}
+    \draw[->] (mat-\i-5.east) -- ++(1cm,0) node[right] {$\mathcal{O}$};
+
+
+
+\end{tikzpicture}
+\textit{$I=2, m=3, q=1, l=1$}
 
 \subsection{Backward Pass}
 The backward pass is used to update the weights and biases of the network, to reduce the error of the network and improve the accuracy of the model.
 Back propagation is about finding how much of the error is due to each weight in the network, and then updating the weights to reduce the error.
 \vspace{1em}
 \newline
-Using partial derivatives....
+Leibniz's notation of the chain rule is used to find the partial derivative of the error with respect to the weights and biases in the network.
+Leibniz's notation states that \textit{If a variable z depends on the variable y, which itself depends on the variable x (that is, y and z are dependent variables), then z depends on x as well, via the intermediate variable y.}
+\begin{align}
+    \frac{\delta z}{\delta x} = \frac{\delta z}{\delta y}\cdot\frac{\delta y}{\delta x}
+\end{align}
 \vspace{1em}
 \newline
 the partial derivative of the output nodes, with m layers, is given by:
@@ -592,6 +654,24 @@ With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}$ being th
 %tikz graph%
 
 
+
+
+
+%weights and biases %
+
+\begin{equation}
+    \omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}\cdot\alpha_{n}
+\end{equation}
+
+\begin{equation}
+    \beta'^{k}_{nq} = \beta^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}
+\end{equation}
+
+
+
+
+
+\subsection{Multiple Hidden Layers}
 \begin{tikzpicture}[
     net/.style={
       matrix of nodes,
@@ -634,7 +714,7 @@ With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}$ being th
     % Connections from hidden layer 1 to hidden layer 1
     \draw[->] (mat-2-4) -- (mat-2-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{1}^2)$};
     \draw[->] (mat-4-4) -- (mat-4-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{2}^2)$};
-    \draw[->] (mat-6-4) -- (mat-6-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{2}^2)$};
+    \draw[->] (mat-6-4) -- (mat-6-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{3}^2)$};
 
     % Connections from hidden layer 1 to hidden layer 2
     \foreach \i in {2,4,6}
@@ -650,19 +730,6 @@ With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}$ being th
 
 
 \end{tikzpicture}
-
-
-
-%weights and biases %
-
-\begin{equation}
-    \omega'^{k}_{nq} = \omega'^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}\cdot\alpha_{n}
-\end{equation}
-
-\begin{equation}
-    \beta'^{k}_{nq} = \beta'^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}
-\end{equation}
-
 
 \end{document}
  
