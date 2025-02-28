@@ -3,11 +3,12 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot
 import reading_and_writing as rw
+from scipy.special import expit
 import matplotlib.pyplot as plt
 
-perceptronStructure = (3,[(5,'sigmoid'), (1, 'sigmoid')])
-learningRate = 0.25
-epochs = 2000
+perceptronStructure = (2,[(5,'sigmoid'), (1, 'sigmoid')])
+learningRate = 0.08
+epochs = 1000
 
 # testing with sigmoid
 def sigmoid(x):
@@ -146,43 +147,47 @@ errorDF = pd.DataFrame(columns=['epoch', 'error'])
 
 # Initialize the weights and biases
 weightsAndBiases = init_structure(perceptronStructure)
+continueTraining = True
 
-for epoch in range(epochs):
-    for i, day in enumerate(dataBase.itertuples(index=False), start=0):
-        # No errors for our of range datapoints (first and last)
-        if i == len(dataBase)-1:
-            continue
+while continueTraining:
+    for epoch in range(epochs):
+        predictions = []
+        for i, day in enumerate(dataBase.itertuples(index=False), start=0):
+            # No errors for our of range datapoints (first and last)
+            if i == len(dataBase)-1:
+                continue
 
-        # Get the previous and next day
-        nextDay = tuple(dataBase.iloc[i + 1])
+            # Get the previous and next day
+            nextDay = tuple(dataBase.iloc[i + 1])
 
-        inputData = np.array([float(day[2]), float(day[8]), float(day[4])])
-        outputData = np.array(float(nextDay[4]))
+            inputData = np.array([float(day[2]), float(day[8])])
+            outputData = np.array(float(nextDay[4]))
 
-        # Forward pass
-        activatedValues, summedValues = forward_pass(inputData, weightsAndBiases, perceptronStructure)
+            # Forward pass
+            activatedValues, summedValues = forward_pass(inputData, weightsAndBiases, perceptronStructure)
 
-        # Backward pass
-        weightsAndBiases = delta_function(weightsAndBiases, activatedValues, summedValues, outputData, perceptronStructure)
+            # Backward pass
+            weightsAndBiases = delta_function(weightsAndBiases, activatedValues, summedValues, outputData, perceptronStructure)
 
-        # Update the weights and biases
-        weightsAndBiases = backward_pass(weightsAndBiases, learningRate)
+            # Update the weights and biases
+            weightsAndBiases = backward_pass(weightsAndBiases, learningRate)
 
-    # Calculate the error
-    error = error_function(outputData, activatedValues)
-    newError = pd.DataFrame({'epoch': [epoch], 'error': [error]})
-    errorDF = pd.concat([errorDF, newError], ignore_index=True)
-    print(f'Epoch: {epoch}, Error: {error}')
+            predictions.append({'DATE': nextDay[0], 'Skelton': activatedValues[-1][0]})
 
-actualDF = dataBase[['DATE', 'Skelton']]
+        # Calculate the error
+        error = error_function(outputData, activatedValues)
+        newError = pd.DataFrame({'epoch': [epoch], 'error': [error]})
+        errorDF = pd.concat([errorDF, newError], ignore_index=True)
+        print(f'Epoch: {epoch}, Error: {error}')
+
+    actualDF = dataBase[['DATE', 'Skelton']]
+    if input('Continue training? (y/n): ') == 'n':
+        continueTraining = False
+
+    
 
 # Create a DataFrame for the predictions
-dataBase2 = rw.read_data_all2('dataSet.db', 'data_table')
-dataBase2.iloc[:, 1:] = min_max_scaler(dataBase.iloc[:, 1:])
-
-
-
-predictionDF = pd.DataFrame(dataBase2[['DATE', 'Skelton']])
+predictionDF = pd.DataFrame(predictions)
 
 with PdfPages('plots/error_vs_epochs.pdf') as pdf:
     line_plot(errorDF, pdf)

@@ -8,8 +8,12 @@
 \usepackage{tcolorbox}
 \usepackage{float}
 \usepackage{chngcntr}
+\usepackage{tikz}
+\usetikzlibrary{matrix,chains,positioning,decorations.pathreplacing,arrows}
 
 \counterwithin{figure}{section}
+\counterwithin{equation}{section}
+
 
 \title{Predicting flow with Back Propagation Neural Networks}
 \author{F328799}
@@ -419,15 +423,66 @@ The network will be implemented with a back propagation learning algorithm.
 50 25 25
 
 \section{Model Architecture}
+nueron architecutre and activation functions
+
+\begin{tikzpicture}[
+    init/.style={
+      draw,
+      circle,
+      inner sep=2pt,
+      font=\Huge,
+      join = by -latex
+    },
+    squa/.style={
+      draw,
+      inner sep=2pt,
+      font=\Large,
+      join = by -latex
+    },
+    start chain=2,node distance=13mm
+    ]
+    \node[on chain=2] 
+      (x2) {$x_2$};
+    \node[on chain=2,join=by o-latex] 
+      {$w_2$};
+    \node[on chain=2,init] (sigma) 
+      {$\displaystyle\Sigma$};
+    \node[on chain=2,squa,label=above:{\parbox{2cm}{\centering Activate \\ function}}]   
+      {$f$};
+    \node[on chain=2,label=above:Output,join=by -latex] 
+      {$\alpha$};
+    \begin{scope}[start chain=1]
+    \node[on chain=1] at (0,1.5cm) 
+      (x1) {$x_1$};
+    \node[on chain=1,join=by o-latex] 
+      (w1) {$w_1$};
+    \end{scope}
+    \begin{scope}[start chain=3]
+    \node[on chain=3] at (0,-1.5cm) 
+      (x3) {$x_3$};
+    \node[on chain=3,label=below:Weights,join=by o-latex] 
+      (w3) {$w_3$};
+    \end{scope}
+    \node[label=above:\parbox{2cm}{\centering Bias \\ $\beta$}] at (sigma|-w1) (b) {};
+    
+    \draw[-latex] (w1) -- (sigma);
+    \draw[-latex] (w3) -- (sigma);
+    \draw[o-latex] (b) -- (sigma);
+    
+    \draw[decorate,decoration={brace,mirror}] (x1.north west) -- node[left=10pt] {Inputs} (x3.south west);
+    \end{tikzpicture}
+
 \section{Activation Functions}
 \section{Loss Functions}
 \section{Network with 1 hidden layer}
 The first implementation of the neural network will be a simple 1 hidden layer network.
 This is to refine parameters and theory before applying to multiple nodes and layers.
 
-\subection{Forward Pass}
-For $n$ inputs and $m$ hidden nodes, $q$ output nodes
+\subsection{Forward Pass}
 
+For $n$ inputs, $m$ hidden nodes and $q$ output nodes.
+\vspace{1em}
+\newline
 The input matrix takes the $n$ data points from the training data in the form:
 \begin{equation}
     \text{Matrix }\mathbf{I}\rightarrow \left[1\times n\right] : \mathbf{I} = 
@@ -435,67 +490,178 @@ The input matrix takes the $n$ data points from the training data in the form:
         \mathbf{I}_1 ,& \mathbf{I}_2 ,&\cdots, & \mathbf{I}_n
         \end{vmatrix}
 \end{equation}
-
-
-
+\newline
+The weight matrix $\omega$ is a $n\times m$ matrix, with each row representing the weights of a input nodes to each connected hidden node.
 \begin{equation}
     \text{Matrix }\omega\rightarrow \left[n\times m\right] : \omega = 
         \begin{vmatrix}
         \omega_{11} ,& \omega_{12} ,&\cdots, & \omega_{1m} \\
         \omega_{21} ,& \ddots & & \omega_{2m} \\
         \vdots  & &\ddots & \vdots  \\
-        \omega_{n1} ,& \omega_{n2} ,&\cdots, & \omega_{nm} \\\
+        \omega_{n1} ,& \omega_{n2} ,&\cdots, & \omega_{nm} \\
         \end{vmatrix}
 \end{equation}
-
+\newline
+The matrix multiplication of the input matrix and the weight matrix gives us a matrix of dimensions $1\times m$.
+This correlates to the amount of hidden nodes in the network, a sum of weights multiplied by their corresponding input data for each hidden node.
 \begin{equation}
     \text{Matrix }\mathbf{I}\cdot\omega\rightarrow \left[1\times n\right]\cdot\left[n\times m\right]\rightarrow \left[1\times m\right]: \mathbf{I} = \cdot\omega
         \begin{vmatrix}
         \mathbf{I}_1\cdot\omega_{11} + \cdots +  \mathbf{I}_n\cdot\omega_{n1} ,& \cdots, \mathbf{I}_m\cdot\omega_{1m} + \cdots +  \mathbf{I}_n\cdot\omega_{nm}
         \end{vmatrix}
 \end{equation}
-
+\newline
+Each node in the hidden layer will have a bias term $\beta$.
+Formatting this as a matrix, we get a $1\times m$ matrix, which aligns with the dimensions matrix $\mathbf{I}\cdot\omega$ (2.5.3).
 \begin{equation}
     \text{Matrix }\beta\rightarrow \left[1\times m\right] : \beta  = 
         \begin{vmatrix}
             \beta_1 ,& \beta_2 ,&\cdots, & \beta_m
         \end{vmatrix}s
 \end{equation}
+\newline
+We apply an element-wise summation of the matrix $\mathbf{I}\cdot\omega$ and the bias matrix $\beta$, to find the matrix $\mathcal{S}^1\rightarrow \left[1\times m \right]$: the summation of each node in layer 1.
+Applying the activation function $\mathcal{F}_1$ to the summation matrix $\mathcal{S}$ gives us the output $\alpha$ of the hidden layer.
 
+\textit{Note that the activation function is labeled $\mathcal{F}_1$ as it is the first activation function in the network, and can differ from other activation functions in the network.}
 \begin{equation}
-    \text{Matrix }\alpha\rightarrow \left[1\times m\right] : \beta  = 
-    \mathcal{F}_1(\mathbf{I}\cdot\omega + \beta)
+    \text{Matrix }\alpha\rightarrow \left[1\times m\right] : \alpha  = 
+    \mathcal{F}_1(\mathcal{S}) = \mathcal{F}_1(\mathbf{I}\cdot\omega + \beta) 
 \end{equation}
-
+This activation function has applied to every element in the matrix.
+This matrix $\alpha$ is then used as the input for the output layer of the network.
+\newline
+The second weight matrix $\mu$ is a $m\times q$ matrix, with each row representing the weights of the hidden nodes to the output nodes.
 \begin{equation}
     \text{Matrix }\mu\rightarrow \left[m\times q\right] : \mu  = 
         \begin{vmatrix}
             \mu_{11}, &\mu_{22}, &\cdots,& \mu_{1q} \\
-            \mu{21} ,& \ddots & & \mu{2q} \\
+            \mu_{21} ,& \ddots & & \mu_{2q} \\
             \vdots  & &\ddots & \vdots  \\
-            \mu{m1} ,& \mu{m2} ,&\cdots, & \mu{mq} \\\
+            \mu_{m1} ,& \mu_{m2} ,&\cdots, & \mu_{mq} \\
         \end{vmatrix}
 \end{equation} 
-
+\newline
+Just like our inputs $I$ and weights $\omega$, the matrix multiplication of the hidden layer output $\alpha$ and the weight matrix $\mu$ gives us a matrix of dimensions $1\times q$.
+This correlates to the amount of nodes in the output layer, where each object in the matrix is the sum of the weight that connect the output node to its hidden nodes, multiplied by their hidden node output.
 \begin{equation}
     \text{Matrix }\alpha\cdot\mu\rightarrow \left[1\times m\right]\cdot\left[m\times q\right]\rightarrow \left[1\times q\right] : \alpha\cdot\mu  = 
         \begin{vmatrix}
             \alpha_{1}\cdot\mu_{11} + \cdots +  \alpha_{m}\cdot\mu_{m1}, & \cdots, \alpha_{1}\cdot\mu_{1q} + \cdots +  \alpha_{m}\cdot\mu_{mq}
         \end{vmatrix}
 \end{equation} 
-
+\newline
+Matrix $\rho$ is the bias matrix for the output layer, with dimensions $1\times q$.
 \begin{equation}
     \text{Matrix }\rho \rightarrow \left[1\times q\right] : \rho  = 
         \begin{vmatrix}
             \rho_1, & \rho_2, & \cdots & \rho_q
         \end{vmatrix}
 \end{equation} 
+\newline
+We apply an element-wise summation of the matrix $\alpha\cdot\mu$ and the bias matrix $\rho$, to find the matrix $\mathcal{S}^2 \rightarrow \left[1\times q \right]$ summation of the nodes in layer 2.
+Applying the activation function $\mathcal{F}_2$ to the summation matrix $\mathcal{S}^2$ gives us the output $\text{Output}$ of the network.
+
+\textit{Note that $\mathcal{F}_2$ the second activation function in the network, and can differ from $\mathcal{F}_1$.}
+\begin{equation}
+    \text{Output }\rightarrow \left[1\times q\right] : \mathcal{O}_{q}  = 
+    \mathcal{F}_2(\mathcal{S}^2) = \mathcal{F}_2(\alpha\cdot\mu + \rho)
+\end{equation}
+This gives us our prediction from the forward pass through the network. 
+
+\subsection{Backward Pass}
+The backward pass is used to update the weights and biases of the network, to reduce the error of the network and improve the accuracy of the model.
+Back propagation is about finding how much of the error is due to each weight in the network, and then updating the weights to reduce the error.
+\vspace{1em}
+\newline
+Using partial derivatives....
+\vspace{1em}
+\newline
+the partial derivative of the output nodes, with m layers, is given by:
+\begin{equation}
+    \delta^{m}_{n} =  =\mathcal{L}(C_{n},O_{n})\cdot\mathcal{F}'_{m}(\mathcal{S}^{m}_{n})
+\end{equation}
+Where $\mathcal{L}(C_{n},\mathcal{O}_{n})$ is the loss function, $C_{n}$ is the correct output and $O_{n}$ is the predicted output of the node.
+\vspace{1em}
+\newline
+For the hidden nodes in layers $1\leq k < m$:
+\begin{equation}
+    \delta^{k}_{n} = = \sum_{q=1}^{p}\Big(\omega_{nq}\cdot\delta^{k+1}_{q}\cdot \mathcal{F}'_{k}(\mathcal{S}^{k+1}_{q})\Big)
+\end{equation}
+With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}$ being the weight between node $n$ in layer $k$ and node $q$ in layer $k+1$.
+%tikz graph%
+
+
+\begin{tikzpicture}[
+    net/.style={
+      matrix of nodes,
+      nodes={draw, circle, minimum size=0.75cm},
+      column sep=0.75cm,
+      row sep=10pt
+    },
+    >=latex
+]
+
+  % Define the matrix
+  \matrix[net] (mat) {
+    |[draw=none]| \parbox{1cm}{\centering Input\\Layer} & &|[draw=none]| \parbox{1cm}{\centering Hidden\\Layer\\1} & &|[draw=none]| \parbox{1cm}{\centering Hidden\\Layer\\2}& &|[draw=none]| \parbox{1cm}{\centering Output\\Layer} \\
+    & $\mathcal{S}_{1}^1$  & $\alpha_{1}^1$ & $\mathcal{S}_{1}^2$  & $\alpha_{1}^2$ \\
+    $I_1$ & \\
+    & $\mathcal{S}_{2}^1$  & $\alpha_{2}^1$ & $\mathcal{S}_{2}^2$  & $\alpha_{2}^2$ & $\mathcal{S}_{1}^3$  & $\alpha_{1}^3$\\
+    $I_2$ & \\
+    & $\mathcal{S}_{3}^1$  & $\alpha_{3}^1$ & $\mathcal{S}_{3}^2$  & $\alpha_{3}^2$\\
+  };
+
+  % input labels
+  \foreach \i [count=\j] in {3,5}
+  \draw[<-] (mat-\i-1.west) -- ++(-1cm,0) node[left] {Input \j};
+
+  % Connections from input to hidden layer 1
+  \foreach \i in {3,5}
+    \foreach \o in {2,4,6}
+      \draw[->] (mat-\i-1) -- (mat-\o-2);
+
+    % Connections from hidden layer 1 to hidden layer 1
+    \draw[->] (mat-2-2) -- (mat-2-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{1}^1)$};
+    \draw[->] (mat-4-2) -- (mat-4-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{2}^1)$};
+    \draw[->] (mat-6-2) -- (mat-6-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{3}^1)$};
+
+    % Connections from hidden layer 1 to hidden layer 2
+    \foreach \i in {2,4,6}
+    \foreach \o in {2,4,6}
+      \draw[->] (mat-\i-3) -- (mat-\o-4);
+
+    % Connections from hidden layer 1 to hidden layer 1
+    \draw[->] (mat-2-4) -- (mat-2-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{1}^2)$};
+    \draw[->] (mat-4-4) -- (mat-4-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{2}^2)$};
+    \draw[->] (mat-6-4) -- (mat-6-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{2}^2)$};
+
+    % Connections from hidden layer 1 to hidden layer 2
+    \foreach \i in {2,4,6}
+    \foreach \o in {4}
+      \draw[->] (mat-\i-5) -- (mat-\o-6);
+
+    \draw[->] (mat-4-6) -- (mat-4-7) node[midway, above] {$\mathcal{F}_3(\mathcal{S}_{1}^3)$};
+
+    % input labels
+    \foreach \i [count=\j] in {4}
+    \draw[->] (mat-\i-7.east) -- ++(1cm,0) node[right] {$\mathcal{O}$};
+
+
+
+\end{tikzpicture}
+
+
+
+%weights and biases %
 
 \begin{equation}
-    \text{Output }\rightarrow \left[1\times q\right] : \text{Output}  = 
-    \mathcal{F}_2(\alpha\cdot\mu + \rho)
+    \omega'^{k}_{nq} = \omega'^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}\cdot\alpha_{n}
 \end{equation}
 
+\begin{equation}
+    \beta'^{k}_{nq} = \beta'^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}
+\end{equation}
 
 
 \end{document}
