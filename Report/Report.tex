@@ -635,7 +635,7 @@ Leibniz's notation states that \textit{If a variable z depends on the variable y
 \end{align}
 \vspace{1em}
 \newline
-To back propagate through the network, we need to find how much of the error (cost $C$) is due to each node in the network.
+To back propagate through the network, we need to find how much of the error (cost $C$) is due to each node in the network so that we can update the weights and biases to reduce the cost for future predictions.
 Using the chain rule, we can find the rate of change of the error with respect to the weights and biases in the network, working backwards from the output to each node.
 We can use partial derivatives to find the rate of change of the error with respect to each weight and bias in the network, by differentiating the weights and biases dependent variables.
 \begin{equation}
@@ -660,43 +660,122 @@ Then it follows with equation (2.5.10):
     \frac{\delta \alpha^{\mathcal{L}}_m}{\delta \mathcal{S}^{\mathcal{L}}_m} = \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m)\hspace{30pt}\rightarrow&  \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} = \alpha_{n}^{\mathcal{L}-1} \cdot \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m) \cdot \frac{\delta C}{\delta \alpha^{\mathcal{L}}_m}\\
     \rightarrow& \frac{\delta C}{\delta \beta^{\mathcal{L}}_{m}} = \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m) \cdot \frac{\delta C}{\delta \alpha^{\mathcal{L}}_m}
 \end{align}
-As we are moving backwards through the network, we use the same theory that the gradient at the node is the sum of the gradients of the weights it is connected to:
+As we are moving backwards through the network, we use the same theory that the gradient at the node is the sum of the gradients of the weights it is connected to,
+Where are influenced by the gradient at the node it is connected to. We call this value $\delta$.
 \begin{align}
-    \frac{\delta C}{\delta \alpha^{\mathcal{L}}_m} = \sum_{p=1}^{q}\Big(\frac{\delta C}{\delta \omega^{\mathcal{L}+1}_{mp}}\Big) = \delta^{\mathcal{L}+1}_{q}
+    \frac{\delta C}{\delta \alpha^{\mathcal{L}}_m} = \sum_{p=1}^{q}\Big(\frac{\delta C}{\delta \omega^{\mathcal{L}+1}_{mp}}\Big) = \sum_{p=1}^{q}\Big(\delta^{\mathcal{L}+1}_{p} \cdot \omega^{\mathcal{L}+1}_{mp}\Big)
 \end{align}
-What we just derived is the delta value of a node. Its the cumulative error of that node, and the error of the nodes it is connected to, propagated back through the network.
+Referencing to our example network:
+\vspace{1em}
+\newline
+\begin{tikzpicture}[
+    net/.style={
+      matrix of nodes,
+      nodes={draw, circle, minimum size=0.75cm},
+      column sep=0.75cm,
+      row sep=10pt
+    },
+    >=latex
+]
+
+  % Define the matrix
+  \matrix[net] (mat) {
+    |[draw=none]| \parbox{1.5cm}{\centering Input\\Layer} & &|[draw=none]| \parbox{1.5cm}{\centering Hidden\\Layer} & &|[draw=none]| \parbox{1.5cm}{\centering Output\\Layer} \\
+    & $\delta_{1}^1$  & $\alpha_{1}^1$ \\
+    $I_1$ & \\
+    & $\delta_{2}^1$  & $\alpha_{2}^1$ & $\delta_{1}^2$  & $\alpha_{1}^2$\\
+    $I_2$ & \\
+    & $\delta_{3}^1$  & $\alpha_{3}^1$ \\
+  };
+
+  % input labels
+  \foreach \i [count=\j] in {3,5}
+  \draw[<-] (mat-\i-1.west) -- ++(-1cm,0) node[left] {Input \j};
+
+  % Connections from input to hidden layer 1
+    \draw[<-] (mat-3-1) -- (mat-2-2) node[midway, above] {$\omega^{1}_{11}$};
+    \draw[<-] (mat-3-1) -- (mat-4-2) node[pos=0.4, above] {$\omega^{1}_{12}$};
+    \draw[<-] (mat-3-1) -- (mat-6-2) node[pos=0.075, below] {$\omega^{1}_{13}$};
+    \draw[<-] (mat-5-1) -- (mat-2-2) node[pos=0.1, above] {$\omega^{1}_{21}$};
+    \draw[<-] (mat-5-1) -- (mat-4-2) node[pos=0.6, above] {$\omega^{1}_{22}$};
+    \draw[<-] (mat-5-1) -- (mat-6-2) node[midway, above] {$\omega^{1}_{23}$};
+
+    % Connections from hidden layer 1 to hidden layer 1
+    \draw[<-] (mat-2-2) -- (mat-2-3) node[midway, above] {$\mathcal{F}'_1(\mathcal{S}_{1}^1)$};
+    \draw[<-] (mat-4-2) -- (mat-4-3) node[midway, above] {$\mathcal{F}'_1(\mathcal{S}_{2}^1)$};
+    \draw[<-] (mat-6-2) -- (mat-6-3) node[midway, above] {$\mathcal{F}'_1(\mathcal{S}_{3}^1)$};
+
+    % Connections from hidden layer 1 to output layer
+    \draw[<-] (mat-2-3) -- (mat-4-4) node[midway, above] {$\omega^{2}_{11}$};
+    \draw[<-] (mat-4-3) -- (mat-4-4) node[midway, above] {$\omega^{2}_{21}$};
+    \draw[<-] (mat-6-3) -- (mat-4-4) node[midway, below] {$\omega^{2}_{31}$};
+
+    \draw[<-] (mat-4-4) -- (mat-4-5) node[midway, above] {$\mathcal{F}'_2(\mathcal{S}_{1}^2)$};
+
+
+    % output labels
+    \foreach \i [count=\j] in {4}
+    \draw[<-] (mat-\i-5.east) -- ++(1cm,0) node[right] {$C(E,\mathcal{O})$};
+
+
+
+\end{tikzpicture}
+\textit{$I=2, m=3, q=1, l=1$}
+This sum is the result of propagating error back through the network and is the backbone of the back propagation algorithm.
 Finally substituting this back into (2.6.7) and (2.6.8) we get the following:
 \begin{align}
-    \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} &= \alpha_{n}^{\mathcal{L}-1} \cdot \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m) \cdot \delta^{\mathcal{L}+1}_{q}\\
-    \frac{\delta C}{\delta \beta^{\mathcal{L}}_{m}} &= \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m)\cdot\delta^{\mathcal{L}+1}_{q}
+    \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} &= \alpha_{n}^{\mathcal{L}-1} \cdot \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m) \cdot \sum_{p=1}^{q}\Big(\delta^{\mathcal{L}+1}_{p} \cdot \omega^{\mathcal{L}+1}_{mp}\Big)\\
+    \frac{\delta C}{\delta \beta^{\mathcal{L}}_{m}} &= \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m)\cdot\sum_{p=1}^{q}\Big(\delta^{\mathcal{L}+1}_{p} \cdot \omega^{\mathcal{L}+1}_{mp}\Big)
 \end{align}
 \vspace{1em}
 \newline
-For the output layer, the delta value is the output of the cost function, as 100\% of the error comes through the output layer.
-\begin{equation}
-    \delta^{m}_{n} = C(E_{n},O_{n})
-\end{equation}
-Where $C(C_{n},\mathcal{O}_{n})$ is the loss function, $E_{n}$ is the expected output and $O_{n}$ is the predicted output of the node.
+Using what we derived, we can find a formula for the delta values of the nodes in the network, collecting like terms from the equations above(2.6.10), (2.6.11).
+\begin{align}
+    \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} &= \alpha_{n}^{\mathcal{L}-1} \cdot \delta^{\mathcal{L}}_{m}\\
+    \frac{\delta C}{\delta \beta^{\mathcal{L}}_{m}} &= \delta^{\mathcal{L}}_{m}
+\end{align}
+\vspace{1em}
+\newline
+These delta values can be used in the form of matrices in our network to update the weights and biases.
+For the output layer, the delta value is the output of the cost function, as 100\% of the error comes through the output layer, and then we apply the derivative of the activation function.
+\begin{align}
+    \delta^{\mathcal{L}}_{m} &= C(E_{m},O_{m})\cdot\mathcal{F}'_{m}(\mathcal{S}^{\mathcal{L}}_{m}) \notag\\
+    \text{Matrix }\delta^{\mathcal{L}}_{m} \rightarrow \left[1 \times m\right]:  \delta^{\mathcal{L}}_{m} &=
+    \begin{vmatrix}
+        C(E_{1},O_{1})\cdot\mathcal{F}'_{1}(\mathcal{S}^{\mathcal{L}}_{1}), & \cdots, & C(E_{m},O_{m})\cdot\mathcal{F}'_{m}(\mathcal{S}^{\mathcal{L}}_{m})
+    \end{vmatrix} 
+\end{align}
+Where $C(C_{m},\mathcal{O}_{m})$ is the loss function, $E_{m}$ is the expected output and $O_{m}$ is the predicted output of the node.
 \vspace{1em}
 \newline
 We can then construct an equation for the delta values of the hidden nodes in the network.
 
-\textit{For the hidden nodes in layers $1\leq k < m$:}
-\begin{equation}
-    \delta^{k}_{n} = \sum_{q=1}^{p}\Big(\omega^{k+1}_{nq}\cdot\delta^{k+1}_{q}\Big)
-\end{equation}
+\textit{For the hidden nodes in layers $1\leq k < \mathcal{L}$:}
+\begin{align}
+    \delta^{k}_{n} = \mathcal{F}'_{k}(\mathcal{S}^{k}_n)\cdot&\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{np}\Big) \notag\\
+    &\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{np}\Big) \rightarrow \text{ Matrix } \left[1 \times p\right] \cdot \left[n \times p\right]^{T} \rightarrow \left[1 \times n\right]\notag\\
+    \text{Matrix }\delta^{k}_{n} \rightarrow \left[1 \times n\right] \circ \left[1 \times n\right]  \rightarrow \left[1 \times n\right] :  \delta^{k}_{n} =&
+    \begin{vmatrix}
+        \mathcal{F}'_{k}(\mathcal{S}^{k}_n)\cdot\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{1p}\Big), \cdots,\mathcal{F}'_{k}(\mathcal{S}^{k}_n)\cdot\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{np}\Big)
+    \end{vmatrix}
+\end{align}
 With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}^{k+1}$ being the weight between node $n$ in layer $k$ and node $q$ in layer $k+1$.
+With $\circ$ being the element-wise multiplication of the two matrices.
 \vspace{1em}
 \newline
 Using our findings from equation (2.6.10) and (2.6.11), we can update the weights and biases in the network.
 We can update the weights and biases in the network by adding the gradient, multiplied by the learning rate $\eta$. 
 This decides how much of the gradient we want to apply to the weights and biases for our next forward pass.
+
+% add matrix calculations to the weights and biases %
+% calculate all the deltas friest then calcualte weights and biases %
+%update to show that???%
 \begin{equation}
-    \omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\delta^{k}_{q}\cdot\alpha_{n}^{k-1} \cdot\mathcal{F}'_{m}(\mathcal{S}^{k}_{q})
+    \omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\delta^{k}_{q}\cdot\alpha_{n}^{k-1}
 \end{equation}
 
 \begin{equation}
-    \beta'^{k}_{nq} = \beta^{k}_{nq} + \eta\cdot\delta^{k}_{q} \cdot\mathcal{F}'_{m}(\mathcal{S}^{k}_{q})
+    \text{Matrix }\rightarrow \left[n \times q\right] + \left[1 \times q\right]  \rightarrow \left[n \times 1\right] :\beta'^{k}_{nq} = \beta^{k}_{nq} + \eta\cdot\delta^{k}_{q}
 \end{equation}
 
 
