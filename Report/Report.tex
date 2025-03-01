@@ -474,13 +474,10 @@ nueron architecutre and activation functions
 
 \section{Activation Functions}
 \section{Loss Functions}
-\section{Network with 1 hidden layer}
-The first implementation of the neural network will be a simple 1 hidden layer network.
-This is to refine parameters and theory before applying to multiple nodes and layers.
 
-\subsection{Forward Pass}
+\section{Forward Pass}
 
-For $n$ inputs, $m$ hidden nodes and $q$ output nodes.
+For $n$ inputs, $m$ hidden nodes in layer $\mathcal{L}$ and $q$ output nodes.
 \vspace{1em}
 \newline
 The input matrix takes the $n$ data points from the training data in the form:
@@ -491,81 +488,80 @@ The input matrix takes the $n$ data points from the training data in the form:
         \end{vmatrix}
 \end{equation}
 \newline
-The weight matrix $\omega$ is a $n\times m$ matrix, with each row representing the weights of a input nodes to each connected hidden node.
+The weight matrix $\omega^1$ is a $n\times m$ matrix, with each row representing the weights of a input nodes to each connected hidden node in the first hidden layer.
 \begin{equation}
-    \text{Matrix }\omega\rightarrow \left[n\times m\right] : \omega = 
+    \text{Matrix }\omega^{1}\rightarrow \left[n\times m\right] : \omega^1 = 
         \begin{vmatrix}
-        \omega_{11} ,& \omega_{12} ,&\cdots, & \omega_{1m} \\
-        \omega_{21} ,& \ddots & & \omega_{2m} \\
+        \omega_{11}^{1} ,& \omega_{12}^{1} ,&\cdots, & \omega_{1m}^{1} \\
+        \omega_{21}^{1} ,& \ddots & & \omega_{2m}^{1} \\
         \vdots  & &\ddots & \vdots  \\
-        \omega_{n1} ,& \omega_{n2} ,&\cdots, & \omega_{nm} \\
+        \omega_{n1}^{1} ,& \omega_{n2}^{1} ,&\cdots, & \omega_{nm}^{1} \\
         \end{vmatrix}
 \end{equation}
 \newline
 The matrix multiplication of the input matrix and the weight matrix gives us a matrix of dimensions $1\times m$.
-This correlates to the amount of hidden nodes in the network, a sum of weights multiplied by their corresponding input data for each hidden node.
+This correlates to the amount of nodes in the first hidden layer, a sum of weights multiplied by their corresponding input data for each hidden node.
 \begin{equation}
-    \text{Matrix }\mathbf{I}\cdot\omega\rightarrow \left[1\times n\right]\cdot\left[n\times m\right]\rightarrow \left[1\times m\right]: \mathbf{I} = \cdot\omega
+    \text{Matrix }\mathbf{I}\cdot\omega^{1}\rightarrow \left[1\times n\right]\cdot\left[n\times m\right]\rightarrow \left[1\times m\right]: \mathbf{I}\cdot\omega =
         \begin{vmatrix}
-        \mathbf{I}_1\cdot\omega_{11} + \cdots +  \mathbf{I}_n\cdot\omega_{n1} ,& \cdots, \mathbf{I}_m\cdot\omega_{1m} + \cdots +  \mathbf{I}_n\cdot\omega_{nm}
+        \mathbf{I}_1\cdot\omega_{11}^{1} + \cdots +  \mathbf{I}_n\cdot\omega_{n1}^{1} ,& \cdots, \mathbf{I}_m\cdot\omega_{1m}^{1} + \cdots +  \mathbf{I}_n\cdot\omega_{nm}^{1}
         \end{vmatrix}
 \end{equation}
 \newline
 Each node in the hidden layer will have a bias term $\beta$.
 Formatting this as a matrix, we get a $1\times m$ matrix, which aligns with the dimensions matrix $\mathbf{I}\cdot\omega$ (2.5.3).
 \begin{equation}
-    \text{Matrix }\beta\rightarrow \left[1\times m\right] : \beta  = 
+    \text{Matrix }\beta^{1}\rightarrow \left[1\times m\right] : \beta^{1}  = 
         \begin{vmatrix}
-            \beta_1 ,& \beta_2 ,&\cdots, & \beta_m
-        \end{vmatrix}s
+            \beta_{1}^{1} ,& \beta_{2}^{1} ,&\cdots, & \beta_{m}^{1}
+        \end{vmatrix}
 \end{equation}
 \newline
 We apply an element-wise summation of the matrix $\mathbf{I}\cdot\omega$ and the bias matrix $\beta$, to find the matrix $\mathcal{S}^1\rightarrow \left[1\times m \right]$: the summation of each node in layer 1.
 Applying the activation function $\mathcal{F}_1$ to the summation matrix $\mathcal{S}$ gives us the output $\alpha$ of the hidden layer.
 
 \textit{Note that the activation function is labeled $\mathcal{F}_1$ as it is the first activation function in the network, and can differ from other activation functions in the network.}
-\begin{equation}
+\begin{align}
     \text{Matrix }\alpha\rightarrow \left[1\times m\right] : \alpha  = 
-    \mathcal{F}_1(\mathcal{S}) = \mathcal{F}_1(\mathbf{I}\cdot\omega + \beta) 
-\end{equation}
-This activation function has applied to every element in the matrix.
-This matrix $\alpha$ is then used as the input for the output layer of the network.
+    \mathcal{F}_1(\mathcal{S}^{1}) &= \mathcal{F}_1(\mathbf{I}\cdot\omega^{1} + \beta^{1})\\
+    \text{where }\mathcal{S}^1_m &= \sum_{k=1}^{n} \Big(\mathbf{I}_k\cdot\omega_{km}^{1}\Big) + \beta_{m}^{1}
+\end{align}
+This activation function is applied to every element in the matrix.
+This matrix $\alpha$ is then used as the input for the next hidden layer of the network, repeating the same process as before all the way to the output layer:
 \newline
-The second weight matrix $\mu$ is a $m\times q$ matrix, with each row representing the weights of the hidden nodes to the output nodes.
-\begin{equation}
-    \text{Matrix }\mu\rightarrow \left[m\times q\right] : \mu  = 
+The weight matrix $\omega^{\mathcal{L}}$ is a $n\times m$ matrix, with each row representing the weights of a hidden node ($n$) in layer $\mathcal{L}-1$ to each connected node($m$) in layer $\mathcal{L}$.
+\begin{align}
+    \text{Matrix }\omega^{\mathcal{L}}\rightarrow \left[n\times m\right] : \omega^{\mathcal{L}} &= 
         \begin{vmatrix}
-            \mu_{11}, &\mu_{22}, &\cdots,& \mu_{1q} \\
-            \mu_{21} ,& \ddots & & \mu_{2q} \\
-            \vdots  & &\ddots & \vdots  \\
-            \mu_{m1} ,& \mu_{m2} ,&\cdots, & \mu_{mq} \\
-        \end{vmatrix}
-\end{equation} 
-\newline
-Just like our inputs $I$ and weights $\omega$, the matrix multiplication of the hidden layer output $\alpha$ and the weight matrix $\mu$ gives us a matrix of dimensions $1\times q$.
-This correlates to the amount of nodes in the output layer, where each object in the matrix is the sum of the weight that connect the output node to its hidden nodes, multiplied by their hidden node output.
-\begin{equation}
-    \text{Matrix }\alpha\cdot\mu\rightarrow \left[1\times m\right]\cdot\left[m\times q\right]\rightarrow \left[1\times q\right] : \alpha\cdot\mu  = 
+        \omega_{11}^{\mathcal{L}} ,& \omega_{12}^{\mathcal{L}} ,&\cdots, & \omega_{1m}^{\mathcal{L}} \\
+        \omega_{21}^{\mathcal{L}} ,& \ddots & & \omega_{2m}^{\mathcal{L}} \\
+        \vdots  & &\ddots & \vdots  \\
+        \omega_{n1}^{\mathcal{L}} ,& \omega_{n2}^{\mathcal{L}} ,&\cdots, & \omega_{nm}^{\mathcal{L}} \\
+        \end{vmatrix}\\
+        \\
+        \text{Matrix }\beta^{\mathcal{L}}\rightarrow \left[1\times m\right] : \beta^{\mathcal{L}}  &= 
         \begin{vmatrix}
-            \alpha_{1}\cdot\mu_{11} + \cdots +  \alpha_{m}\cdot\mu_{m1}, & \cdots, \alpha_{1}\cdot\mu_{1q} + \cdots +  \alpha_{m}\cdot\mu_{mq}
+            \beta_{1}^{\mathcal{L}} \hspace{4pt},& \beta_{2}^{\mathcal{L}}\hspace{4pt} ,&\cdots, & \beta_{m}^{\mathcal{L}\hspace{4pt}}
         \end{vmatrix}
-\end{equation} 
+\end{align}
+for $l$ hidden layers.
+\vspace{1em}
 \newline
-Matrix $\rho$ is the bias matrix for the output layer, with dimensions $1\times q$.
-\begin{equation}
-    \text{Matrix }\rho \rightarrow \left[1\times q\right] : \rho  = 
-        \begin{vmatrix}
-            \rho_1, & \rho_2, & \cdots & \rho_q
-        \end{vmatrix}
-\end{equation} 
-\newline
-We apply an element-wise summation of the matrix $\alpha\cdot\mu$ and the bias matrix $\rho$, to find the matrix $\mathcal{S}^2 \rightarrow \left[1\times q \right]$ summation of the nodes in layer 2.
-Applying the activation function $\mathcal{F}_2$ to the summation matrix $\mathcal{S}^2$ gives us the output $\text{Output}$ of the network.
+The same summation applies to the hidden layer output $\alpha$ and the weight matrix $\omega$ for each hidden layer, all the way to the output layer.
+We travel layer by layer to reach our predicted output, $\mathcal{O}_{q}$.
 
-\textit{Note that $\mathcal{F}_2$ the second activation function in the network, and can differ from $\mathcal{F}_1$.}
+\begin{align}
+    \text{Matrix }\alpha^{\mathcal{L}}\rightarrow \left[1\times m\right] : \alpha^{\mathcal{L}}  = 
+    \mathcal{F}_\mathcal{L}(\mathcal{S}^{\mathcal{L}}) &= \mathcal{F}_{\mathcal{L}}\Big(\alpha^{\mathcal{L}-1}\cdot\omega^{\mathcal{L}} + \beta^{\mathcal{L}}\Big)\\
+    \text{where }\mathcal{S}^{\mathcal{L}}_{m} &= \sum_{k=1}^{n} \Big( \alpha_k^{\mathcal{L}-1}\cdot\omega^{\mathcal{L}}_{km} \Big) + \beta^{\mathcal{L}}_{m}
+\end{align}
+\textit{Note that $\mathcal{F}_\mathcal{L}$ is the activation function at layer $\mathcal{L}$.}
+\newline
+\vspace{1em}
+Finally, we calculate the output of the network, $\mathcal{O}_{q}$.
 \begin{equation}
     \text{Output }\rightarrow \left[1\times q\right] : \mathcal{O}_{q}  = 
-    \mathcal{F}_2(\mathcal{S}^2) = \mathcal{F}_2(\alpha\cdot\mu + \rho)
+    \mathcal{F}_\mathcal{L}(\mathcal{S}^{\mathcal{L}}) = \mathcal{F}_\mathcal{L}(\alpha^{\mathcal{L}-1}\cdot\omega^{\mathcal{L}} + \beta^{\mathcal{L}})
 \end{equation}
 This gives us our prediction from the forward pass through the network. 
 \vspace{1em}
@@ -588,7 +584,7 @@ An example of a network with 1 hidden node is given below:
     |[draw=none]| \parbox{1.5cm}{\centering Input\\Layer} & &|[draw=none]| \parbox{1.5cm}{\centering Hidden\\Layer} & &|[draw=none]| \parbox{1.5cm}{\centering Output\\Layer} \\
     & $\mathcal{S}_{1}^1$  & $\alpha_{1}^1$ \\
     $I_1$ & \\
-    & $\mathcal{S}_{2}^1$  & $\alpha_{2}^1$ & $\mathcal{S}_{1}^3$  & $\alpha_{1}^3$\\
+    & $\mathcal{S}_{2}^1$  & $\alpha_{2}^1$ & $\mathcal{S}_{1}^2$  & $\alpha_{1}^2$\\
     $I_2$ & \\
     & $\mathcal{S}_{3}^1$  & $\alpha_{3}^1$ \\
   };
@@ -627,7 +623,7 @@ An example of a network with 1 hidden node is given below:
 \end{tikzpicture}
 \textit{$I=2, m=3, q=1, l=1$}
 
-\subsection{Backward Pass}
+\section{Backward Pass}
 The backward pass is used to update the weights and biases of the network, to reduce the error of the network and improve the accuracy of the model.
 Back propagation is about finding how much of the error is due to each weight in the network, and then updating the weights to reduce the error.
 \vspace{1em}
@@ -639,32 +635,68 @@ Leibniz's notation states that \textit{If a variable z depends on the variable y
 \end{align}
 \vspace{1em}
 \newline
-the partial derivative of the output nodes, with m layers, is given by:
+To back propagate through the network, we need to find how much of the error (cost $C$) is due to each node in the network.
+Using the chain rule, we can find the rate of change of the error with respect to the weights and biases in the network, working backwards from the output to each node.
+We can use partial derivatives to find the rate of change of the error with respect to each weight and bias in the network, by differentiating the weights and biases dependent variables.
 \begin{equation}
-    \delta^{m}_{n} =  =\mathcal{L}(C_{n},O_{n})\cdot\mathcal{F}'_{m}(\mathcal{S}^{m}_{n})
+    \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} = \frac{\delta C}{\delta \mathcal{S}^{\mathcal{L}}_m}\cdot\frac{\delta \mathcal{S}^{\mathcal{L}}_m}{\delta \omega^{\mathcal{L}}_{nm}} \hspace{30pt}
+    \frac{\delta C}{\delta \beta^{\mathcal{L}}_{nm}} = \frac{\delta C}{\delta \mathcal{S}^{\mathcal{L}}_m}\cdot\frac{\delta \mathcal{S}^{\mathcal{L}}_m}{\delta \beta^{\mathcal{L}}_{nm}}
 \end{equation}
-Where $\mathcal{L}(C_{n},\mathcal{O}_{n})$ is the loss function, $C_{n}$ is the correct output and $O_{n}$ is the predicted output of the node.
+Using the equation for $\mathcal{S}$ that we found in (2.5.11), we can differentiate the summation with respect to the weights and biases in the network:
+\begin{align}
+    \mathcal{S}^{\mathcal{L}}_{m} &= \sum_{k=1}^{n} \Big( \alpha_k^{\mathcal{L}-1}\cdot\omega^{\mathcal{L}}_{km} \Big) + \beta^{\mathcal{L}}_{m} &\rightarrow
+    \frac{\delta}{\delta \omega^{\mathcal{L}}_{nm}} \sum_{k=1}^{n} \Big( \alpha_k^{\mathcal{L}-1}\cdot\omega^{\mathcal{L}}_{km} \Big) &+ \beta^{\mathcal{L}}_{m} &=
+    \alpha_{n}^{\mathcal{L}-1}\\
+    \mathcal{S}^{\mathcal{L}}_{m} &= \sum_{k=1}^{n} \Big( \alpha_k^{\mathcal{L}-1}\cdot\omega^{\mathcal{L}}_{km} \Big) + \beta^{\mathcal{L}}_{m} &\rightarrow
+    \frac{\delta}{\delta \beta ^{\mathcal{L}}_{m}} \sum_{k=1}^{n} \Big( \alpha_k^{\mathcal{L}-1}\cdot\omega^{\mathcal{L}}_{km} \Big) &+ \beta^{\mathcal{L}}_{m} &= 1
+\end{align}
+Substituting into (2.6.2):
+\begin{align}
+    \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} &=  \alpha_{n}^{\mathcal{L}-1} \cdot\frac{\delta C}{\delta \mathcal{S}^{\mathcal{L}}_m}  &\rightarrow& \hspace{10pt}\alpha_{n}^{\mathcal{L}-1} \cdot\frac{\delta C}{\delta \alpha^{\mathcal{L}}_m}\cdot\frac{\delta \alpha^{\mathcal{L}}_m}{\delta \mathcal{S}^{\mathcal{L}}_m} \\
+    \frac{\delta C}{\delta \beta^{\mathcal{L}}_{m}} &= 1 \cdot\frac{\delta C}{\delta \mathcal{S}^{\mathcal{L}}_m} &\rightarrow& \hspace{10pt}1 \cdot\frac{\delta C}{\delta \alpha^{\mathcal{L}}_m}\cdot\frac{\delta \alpha^{\mathcal{L}}_m}{\delta \mathcal{S}^{\mathcal{L}}_m}\qquad \qquad \qquad \qquad \qquad \qquad \qquad
+\end{align}
+Then it follows with equation (2.5.10):
+\begin{align}
+    \frac{\delta \alpha^{\mathcal{L}}_m}{\delta \mathcal{S}^{\mathcal{L}}_m} = \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m)\hspace{30pt}\rightarrow&  \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} = \alpha_{n}^{\mathcal{L}-1} \cdot \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m) \cdot \frac{\delta C}{\delta \alpha^{\mathcal{L}}_m}\\
+    \rightarrow& \frac{\delta C}{\delta \beta^{\mathcal{L}}_{m}} = \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m) \cdot \frac{\delta C}{\delta \alpha^{\mathcal{L}}_m}
+\end{align}
+As we are moving backwards through the network, we use the same theory that the gradient at the node is the sum of the gradients of the weights it is connected to:
+\begin{align}
+    \frac{\delta C}{\delta \alpha^{\mathcal{L}}_m} = \sum_{p=1}^{q}\Big(\frac{\delta C}{\delta \omega^{\mathcal{L}+1}_{mp}}\Big) = \delta^{\mathcal{L}+1}_{q}
+\end{align}
+What we just derived is the delta value of a node. Its the cumulative error of that node, and the error of the nodes it is connected to, propagated back through the network.
+Finally substituting this back into (2.6.7) and (2.6.8) we get the following:
+\begin{align}
+    \frac{\delta C}{\delta \omega^{\mathcal{L}}_{nm}} &= \alpha_{n}^{\mathcal{L}-1} \cdot \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m) \cdot \delta^{\mathcal{L}+1}_{q}\\
+    \frac{\delta C}{\delta \beta^{\mathcal{L}}_{m}} &= \mathcal{F}'_{\mathcal{L}}(\mathcal{S}^{\mathcal{L}}_m)\cdot\delta^{\mathcal{L}+1}_{q}
+\end{align}
 \vspace{1em}
 \newline
-For the hidden nodes in layers $1\leq k < m$:
+For the output layer, the delta value is the output of the cost function, as 100\% of the error comes through the output layer.
 \begin{equation}
-    \delta^{k}_{n} = = \sum_{q=1}^{p}\Big(\omega_{nq}\cdot\delta^{k+1}_{q}\cdot \mathcal{F}'_{k}(\mathcal{S}^{k+1}_{q})\Big)
+    \delta^{m}_{n} = C(E_{n},O_{n})
 \end{equation}
-With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}$ being the weight between node $n$ in layer $k$ and node $q$ in layer $k+1$.
-%tikz graph%
+Where $C(C_{n},\mathcal{O}_{n})$ is the loss function, $E_{n}$ is the expected output and $O_{n}$ is the predicted output of the node.
+\vspace{1em}
+\newline
+We can then construct an equation for the delta values of the hidden nodes in the network.
 
-
-
-
-
-%weights and biases %
-
+\textit{For the hidden nodes in layers $1\leq k < m$:}
 \begin{equation}
-    \omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}\cdot\alpha_{n}
+    \delta^{k}_{n} = \sum_{q=1}^{p}\Big(\omega^{k+1}_{nq}\cdot\delta^{k+1}_{q}\Big)
+\end{equation}
+With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}^{k+1}$ being the weight between node $n$ in layer $k$ and node $q$ in layer $k+1$.
+\vspace{1em}
+\newline
+Using our findings from equation (2.6.10) and (2.6.11), we can update the weights and biases in the network.
+We can update the weights and biases in the network by adding the gradient, multiplied by the learning rate $\eta$. 
+This decides how much of the gradient we want to apply to the weights and biases for our next forward pass.
+\begin{equation}
+    \omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\delta^{k}_{q}\cdot\alpha_{n}^{k-1} \cdot\mathcal{F}'_{m}(\mathcal{S}^{k}_{q})
 \end{equation}
 
 \begin{equation}
-    \beta'^{k}_{nq} = \beta^{k}_{nq} + \eta\cdot\delta^{k+1}_{q}
+    \beta'^{k}_{nq} = \beta^{k}_{nq} + \eta\cdot\delta^{k}_{q} \cdot\mathcal{F}'_{m}(\mathcal{S}^{k}_{q})
 \end{equation}
 
 
