@@ -756,7 +756,7 @@ We can then construct an equation for the delta values of the hidden nodes in th
     &\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{np}\Big) \rightarrow \text{ Matrix } \left[1 \times p\right] \cdot \left[n \times p\right]^{T} \rightarrow \left[1 \times n\right]\notag\\
     \text{Matrix }\delta^{k}_{n} \rightarrow \left[1 \times n\right] \circ \left[1 \times n\right]  \rightarrow \left[1 \times n\right] :  \delta^{k}_{n} =&
     \begin{vmatrix}
-        \mathcal{F}'_{k}(\mathcal{S}^{k}_n)\cdot\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{1p}\Big), \cdots,\mathcal{F}'_{k}(\mathcal{S}^{k}_n)\cdot\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{np}\Big)
+        \mathcal{F}'_{k}(\mathcal{S}^{k}_1)\cdot\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{1p}\Big), \cdots,\mathcal{F}'_{k}(\mathcal{S}^{k}_n)\cdot\sum_{p=1}^{q}\Big(\delta^{k+1}_{p} \cdot \omega^{k+1}_{np}\Big)
     \end{vmatrix}
 \end{align}
 With $n$ nodes in layer $k$, $p$ nodes in layer $k+1$ and $\omega_{nq}^{k+1}$ being the weight between node $n$ in layer $k$ and node $q$ in layer $k+1$.
