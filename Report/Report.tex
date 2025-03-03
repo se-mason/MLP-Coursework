@@ -764,19 +764,21 @@ With $\circ$ being the element-wise multiplication of the two matrices.
 \vspace{1em}
 \newline
 Using our findings from equation (2.6.10) and (2.6.11), we can update the weights and biases in the network.
-We can update the weights and biases in the network by adding the gradient, multiplied by the learning rate $\eta$. 
+We can update the weights and biases in the network by adding the gradient, multiplied by the learning rate $\eta$.  
 This decides how much of the gradient we want to apply to the weights and biases for our next forward pass.
 
 % add matrix calculations to the weights and biases %
 % calculate all the deltas friest then calcualte weights and biases %
 %update to show that???%
 \begin{equation}
-    \omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\delta^{k}_{q}\cdot\alpha_{n}^{k-1}
+    \text{Matrix }\omega^{k}_{nq}\rightarrow\left[n \times q\right] + \left[1 \times n\right]^T \cdot \left[1 \times q\right]  \rightarrow \left[n \times q\right] :\omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\alpha_{n}^{k-1}\cdot\delta^{k}_{q}
 \end{equation}
 
 \begin{equation}
-    \text{Matrix }\rightarrow \left[n \times q\right] + \left[1 \times q\right]  \rightarrow \left[n \times 1\right] :\beta'^{k}_{nq} = \beta^{k}_{nq} + \eta\cdot\delta^{k}_{q}
+    \text{Matrix }\beta'^{k}_{nq}\rightarrow \left[n \times q\right] + \left[1 \times q\right]  \rightarrow \left[n \times 1\right] :\beta'^{k}_{nq} = \beta^{k}_{nq} + \eta\cdot\delta^{k}_{q}
 \end{equation}
+It is worth remembering that we only update the weights and biases after we have calculated all the delta values for the network, as the error of the network is dependent on what these values were when the forward pass was made.
+Once we calculate the delta values for the network, we can then update the weights and biases.
 
 
 
