@@ -34,3 +34,19 @@ def line_plot(dataSet, pdfFile):
     pdfFile.savefig()
     plt.close()
 
+def correlation_plot(dataSets, columnX, columnY, pdfFile, colourSets):
+    '''Function for plotting the correlation between two columns of data'''
+    
+    # Plot the data
+    plt.figure(figsize=(10, 6))
+    for data, color in zip(dataSets, colourSets):
+        plt.scatter(data[columnX], data[columnY], c=color, label=f'{color} data')
+    plt.title(f'{columnX} vs {columnY}')
+    plt.xlabel(columnX)
+    plt.ylabel(columnY)
+    plt.grid(True)
+    plt.legend()
+
+    # Save the current figure to the PDF
+    pdfFile.savefig()
+    plt.close()

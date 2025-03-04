@@ -439,16 +439,88 @@ The next best correlations are at Malham Tarn -1 (0.49) and Arkengarthdale(0.48)
 \newline
 My initial choice for predictors will be Westwick, Snaizeholme and Malham Tarn-1, as they are the most correlated to Skelton +1, but also the least correlated to each other.
 Another option for predictors would be any of the other flow rate data points, and a combination of the 4 mentioned rainfall data points.
-% Correlation between the data points %
-% heatmaps %
+\vspace{1em}
+\newline
+We can also use some more complex predictors to see if they are more correlated to the predictand.
+These complex predictors will be using averages of the data points, and adding select ones together to get a higher correlation.
+\newline
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/correlation2.png}
+    \caption{Complex Correlation between the data points}
+    \label{fig:correlation}
+\end{figure}
+Figure 1.6.2 shows some of the selected complex data points. 
+In a network of this size, the correlation between points is not as important as the correlation to the predictand, however I don't want to derive complex points that are too mathematically similar to one another.
+\begin{lstlisting}[language=Python]
+correlation_mapping.py
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import reading_and_writing as rw
+
+# Read the data
+dataFrame = rw.read_data_all(dataBase, dataTable).iloc[:, 1:]
+
+# Formulate the complex predictors
+correlationTable['Skelton + 1'] = dataFrame['Skelton'].shift(-1)
+correlationTable['Average flow  + Average Rain'] = (dataFrame['Flow average'] + dataFrame['Rainfall average'])
+correlationTable['Skelton + average rain'] = (dataFrame['Skelton'] + dataFrame['Rainfall average'])
+correlationTable['Flow average'] = (dataFrame['Skelton'] + dataFrame['Westwick'] + dataFrame['Skip Bridge'] + dataFrame['Crakehill']) / 4
+correlationTable['Westwick'] = (dataFrame['Westwick'])
+correlationTable['Skelton'] = dataFrame['Skelton']
+correlationTable['Rainfall averaged over 3 days'] = dataFrame['Rainfall average'] + dataFrame['Rainfall average -1'] + dataFrame['Rainfall average -2']
+
+# Drop na values
+correlationTable = correlationTable.dropna()
+
+# Calculate the correlation matrix
+correlationMatrix = correlationTable.corr()
+
+# Sort the correlation matrix
+correlationMatrix = correlationMatrix.sort_values(by='Skelton + 1', axis=0, ascending=True)
+correlationMatrix = correlationMatrix.sort_values(by='Skelton + 1', axis=1, ascending=True)
+
+
+# Plot the correlation matrix
+plt.figure(figsize=(16, 12))
+sns.heatmap(correlationMatrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
+plt.title("Correlation Heatmap")
+plt.show()
+
+\end{lstlisting}
+
 
 \chapter{Implementing the Neural Network}
-The network will be implemented with a back propagation learning algorithm.
+The neural network will be implemented using python and trained with the back propagation algorithm.
+The network will be a multi-layer perceptron (MLP), with at least one hidden layer.
+\vspace{1em}
+\newline
+Back propagation works by calculating the expected output of a network, then comparing it to the actual output; this is known as the forward pass.
+The algorithm then works backwards through the network, adjusting the weights of the network to reduce the error between the expected and actual output - the backward pass.
+This process is repeated for a given amount of epochs to help reduce the error to a minimal amount. 
+This section is about the implementation of the algorithm and its improvements.
 \section{Data Splitting}
-50 25 25
-
+The data will be split into training, testing and evaluation data.
+To avoid seasonality in the data, we can use 2 years out of the 4 years for training, and the remaining 2 years for testing and evaluation(1 each).
+On paper this seems like a good idea, as each section has the same seasons for the same amount of time, in the same positions.
+\vspace{1em}
+\newline
+However, the data across the years is not equal, with 1993 having much more sporadic flow data than the following years.
+Additionally, there is the largest spike in flow data in the winter of 1994.
+This creates an issue where our training may not have sufficient data to predict the spike in flow rate into January 1995.
+We can try a random split of the data to see if this improves the model, but the results will only be known after the model has been trained.
 \section{Model Architecture}
-nueron architecutre and activation functions
+The MLP Architecture consists of repeated layers of nodes, each representing a 'neuron' in the network.
+Each node takes in $x$ amounts of inputs, and eventually outputs a single value $\alpha$.
+\newline
+To achieve this, each input is multiplied by a weight, and then summed together with a bias term.
+This bias term is introduced to avoid the network being stuck at 0, as the weights are randomly initialised, and input data can be 0.
+Once this sum has been calculated, it is passed through an activation function to give the output of the node.
+\vspace{1em}
+\newline
+This output then becomes the input for the next layer of nodes, repeating the process until the output layer is reached.
 
 \begin{tikzpicture}[
     init/.style={
@@ -495,7 +567,9 @@ nueron architecutre and activation functions
     \draw[o-latex] (b) -- (sigma);
     
     \draw[decorate,decoration={brace,mirror}] (x1.north west) -- node[left=10pt] {Inputs} (x3.south west);
-    \end{tikzpicture}
+\end{tikzpicture}
+\textit{An example node in a neural network}
+
 
 \section{Activation Functions}
 \section{Loss Functions}
@@ -806,6 +880,7 @@ It is worth remembering that we only update the weights and biases after we have
 Once we calculate the delta values for the network, we can then update the weights and biases.
 
 
+\subsection{Implementation of a single hidden layer network}
 
 
 

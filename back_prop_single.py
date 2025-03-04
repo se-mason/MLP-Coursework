@@ -2,13 +2,15 @@ import numpy as np
 import pandas as pd
 import reading_and_writing as rw
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib_plotting import line_plot, scatter_plot
+from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
 
-perceptronStructure = (3, 12, 1)
-learningRate = 0.12
-epochs = 1000
+perceptronStructure = (7, 16, 1)
+learningRate = 0.1
+epochs = 10000
 
+
+# Sigmoid function and its derivative
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -16,15 +18,19 @@ def sigmoid_derivative(x):
     s = sigmoid(x)
     return s * (1 - s)
 
+# Cost function
 def cost_function(expectedOutput, outputActivated):
     '''Calculates the error of the neural network'''
     return expectedOutput - outputActivated
 
-
+# Normalization function
 def min_max_scaler(data):
     '''Function to normalize the data'''
     return (data - data.min()) / (data.max() - data.min())
 
+def min_max_reverser(data, dataMax, dataMin):
+    '''Function to normalize the data'''
+    return data * (dataMax - dataMin) + data.min()
 
 
 def init_structure(perceptronStructure):
@@ -85,31 +91,21 @@ def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputA
     return (hiddenList, outputList)
 
 
-def train_network(hiddenList, outputList):
+def train_network(trainingData, evaluationData, hiddenList, outputList):
     '''Trains the neural network with the training data'''
     count = 0
-
-    # Load the data
-    dataBase = rw.read_data_all('dataSet.db', 'data_table')
-    dataBase.iloc[:, 1:] = min_max_scaler(dataBase.iloc[:, 1:])
-    dataBaseY3 = rw.read_data_all2('dataSet.db', 'data_table')
-    dataBaseY3.iloc[:, 1:] = min_max_scaler(dataBase.iloc[:, 1:])
 
     # Initialize an empty DataFrame to store errors
     errorDF = pd.DataFrame(columns=['epoch', 'error'])
 
     while count < epochs:
-        for i, day in enumerate(dataBase.itertuples(index=False), start=0):
+        for i, day in enumerate(trainingData.itertuples(index=False), start=0):
             # No errors for our of range datapoints (first and last)
             if i == len(dataBase)-1 or i == 0:
                 continue
 
-            # Get the previous and next day
-            nextDay = tuple(dataBase.iloc[i + 1])
-            previousDay = tuple(dataBase.iloc[i - 1])
-
-            inputData = np.array([float(day[3]), float(day[8]), float(previousDay[7])])
-            expectedOutput = np.array(float(nextDay[4]))
+            inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
+            expectedOutput = np.array(float(day[1]))
 
             # Forward pass
             hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
@@ -128,24 +124,60 @@ def train_network(hiddenList, outputList):
     print('Training complete')
     # Predict the data for the next year
     predictions = []
-    for i in dataBaseY3.itertuples(index=False):
-        inputData = np.array([float(i[3]), float(i[8]), float(i[7])])
-        expectedOutput = np.array(float(i[4]))
+    for i, day in enumerate(evaluationData.itertuples(index=False), start=0):
+        inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
 
         # Forward pass
         hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
 
-        predictions.append({'DATE': i[0], 'Skelton': outputActivated[0]})
+        predictions.append({'DATE': day[0], 'Skelton': outputActivated[0]})
     # Create a database for the predictions
     predictionDF = pd.DataFrame(predictions)
         
+    return predictionDF, errorDF
 
-    actualDF = dataBase[['DATE', 'Skelton']]
-    return actualDF, predictionDF, errorDF, dataBaseY3
-
+# Initialize the structure of the perceptron
 hiddenList, outputList = init_structure(perceptronStructure)
-actualDF, predictionDF, errorDF, dataBaseY3 = train_network(hiddenList, outputList)
+
+
+# Load the data
+dataBase = rw.read_data_all('dataSet.db', 'data_table')
+
+# create database for the predictors for the data
+trainingData = pd.DataFrame()
+trainingData['DATE'] = dataBase['DATE']
+
+# Predictand column
+trainingData['Predicted Skelton'] = dataBase['Skelton'].shift(-1)
+
+# Predictors
+trainingData['Skelton'] = dataBase['Skelton']
+trainingData['Westwick'] = dataBase['Westwick']
+trainingData['Flow Average'] = (dataBase['Skelton'] + dataBase['Westwick'] + dataBase['Skip Bridge'] + dataBase['Crakehill']) / 4
+trainingData['Rainfall Average'] = (dataBase['Arkengarthdale'] + dataBase['East Cowton'] + dataBase['Malham Tarn'] + dataBase['Snaizeholme']) / 4
+trainingData['3 Day Rain'] = trainingData['Rainfall Average'] + trainingData['Rainfall Average'].shift(1) + trainingData['Rainfall Average'].shift(2)
+trainingData['Average Flow + Average Rain'] = trainingData['Rainfall Average'] + trainingData['Flow Average']
+trainingData['Skelton + Average Rain'] = trainingData['Skelton'] + trainingData['Rainfall Average']
+
+# Drop na values from shifting
+trainingData = trainingData.dropna()
+
+# Store max Skelton values
+skeltonMax = trainingData['Skelton'].max()
+skeltonMin = trainingData['Skelton'].min()
+
+# Normalize the data
+trainingData.iloc[:, 1:]= min_max_scaler(dataBase.iloc[:, 1:])
+
+
+
+predictionDF, errorDF,  = train_network(trainingData[trainingData['DATE'].dt.year.isin([1993, 1994])],trainingData[trainingData['DATE'].dt.year == 1995],  hiddenList, outputList)
+
+# Denormalize the data
+predictionDF['Skelton'] = min_max_reverser(predictionDF['Skelton'], skeltonMax, skeltonMin)
+trainingData['Skelton'] = min_max_reverser(trainingData['Skelton'], skeltonMax, skeltonMin)
 
 with PdfPages('plots/error_vs_epochs.pdf') as pdf:
     line_plot(errorDF, pdf)
-    scatter_plot([dataBaseY3, predictionDF], 'Skelton', pdf, ['b', 'r'])
+    scatter_plot([trainingData[trainingData['DATE'].dt.year == 1995], predictionDF], 'Skelton', pdf, ['b', 'r'])
+    correlation_plot([trainingData[trainingData['DATE'].dt.year == 1995], predictionDF], 'Skelton', 'Skelton', pdf, ['b', 'r'])
