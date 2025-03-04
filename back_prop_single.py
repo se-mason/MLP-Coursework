@@ -5,9 +5,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot
 
 
-perceptronStructure = (2, 5, 1)
-learningRate = 0.05
-epochs = 1000
+perceptronStructure = (3, 9, 1)
+learningRate = 0.12
+epochs = 10000
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -19,6 +19,7 @@ def sigmoid_derivative(x):
 def cost_function(expectedOutput, outputActivated):
     '''Calculates the error of the neural network'''
     return expectedOutput - outputActivated
+
 
 def min_max_scaler(data):
     '''Function to normalize the data'''
@@ -99,13 +100,14 @@ def train_network(hiddenList, outputList):
         predictions = []
         for i, day in enumerate(dataBase.itertuples(index=False), start=0):
             # No errors for our of range datapoints (first and last)
-            if i == len(dataBase)-1:
+            if i == len(dataBase)-1 or i == 0:
                 continue
 
             # Get the previous and next day
             nextDay = tuple(dataBase.iloc[i + 1])
+            previousDay = tuple(dataBase.iloc[i - 1])
 
-            inputData = np.array([float(day[2]), float(day[8])])
+            inputData = np.array([float(day[3]), float(day[8]), float(previousDay[7])])
             expectedOutput = np.array(float(nextDay[4]))
 
             # Forward pass

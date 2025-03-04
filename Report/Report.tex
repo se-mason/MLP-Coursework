@@ -414,6 +414,31 @@ This data should now be considered usable to train our Multi-Layer Perceptron (M
 The database can now be updated with the new data.
 
 \section{Correlation}
+To best predict our data, we need to choose the correct inputs that will give us the best results.
+We need to aim to a high correlation of the data points to the predictand, while also avoiding correlation between predictors.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/correlation.png}
+    \caption{Correlation between the data points}
+    \label{fig:correlation}
+\end{figure}
+FIgure 1.6.1 shows the correlation between the data points, which we can use to determine the best predictors for our model.
+As we are trying to to predict the flow rate at Skelton for the day after a data point, the correlation map has been ordered by the correlation to Skelton + 1.
+The highest correlation points are the other flow rate data points, with the highest being the flow rate at Westwick.
+They are all highly correlated to Skelton +1, but also to each other. This is to be expected as they are all flow rate data points of the same river.
+An interesting point to note is that Westwick is the least correlated to Skelton on the day of measurement, but most correlated to the day after.
+\vspace{1em}
+\newline
+The rainfall data is much less correlated to the flow rate data, with the highest correlation being 0.56 at Malham Tarn.
+This is to be expected as the rainfall data is not directly related to the flow rate data, but the flow rate data is related to the rainfall data.
+The next highest correlated rainfall location is Snaizeholme (0.55), but this also has a high correlation to Malham Tarn.
+Refering back to figure 0.0.1, we can see that they are very close, and therefore the data will be very similar.
+\newline
+The next best correlations are at Malham Tarn -1 (0.49) and Arkengarthdale(0.48), but these are are not nearly as correlated each other and the previous two.
+\vspace{1em}
+\newline
+My initial choice for predictors will be Westwick, Snaizeholme and Malham Tarn-1, as they are the most correlated to Skelton +1, but also the least correlated to each other.
+Another option for predictors would be any of the other flow rate data points, and a combination of the 4 mentioned rainfall data points.
 % Correlation between the data points %
 % heatmaps %
 
