@@ -5,9 +5,9 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot
 
 
-perceptronStructure = (3, 9, 1)
+perceptronStructure = (3, 12, 1)
 learningRate = 0.12
-epochs = 10000
+epochs = 1000
 
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
@@ -92,12 +92,13 @@ def train_network(hiddenList, outputList):
     # Load the data
     dataBase = rw.read_data_all('dataSet.db', 'data_table')
     dataBase.iloc[:, 1:] = min_max_scaler(dataBase.iloc[:, 1:])
+    dataBaseY3 = rw.read_data_all2('dataSet.db', 'data_table')
+    dataBaseY3.iloc[:, 1:] = min_max_scaler(dataBase.iloc[:, 1:])
 
     # Initialize an empty DataFrame to store errors
     errorDF = pd.DataFrame(columns=['epoch', 'error'])
 
     while count < epochs:
-        predictions = []
         for i, day in enumerate(dataBase.itertuples(index=False), start=0):
             # No errors for our of range datapoints (first and last)
             if i == len(dataBase)-1 or i == 0:
@@ -116,24 +117,35 @@ def train_network(hiddenList, outputList):
             # Backward pass
             hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1))
 
-
-            predictions.append({'DATE': nextDay[0], 'Skelton': outputActivated[0]})
-
         count += 1
         # Calculate the error
         error = cost_function(expectedOutput, outputActivated)
         newError = pd.DataFrame({'epoch': [count], 'error': [error]})
         errorDF = pd.concat([errorDF, newError], ignore_index=True)
-        print(f'Epoch: {count}, Error: {error}')
+        if count % 50 == 0:
+            print(f'Epoch: {count}, Error: {error}')
+
+    print('Training complete')
+    # Predict the data for the next year
+    predictions = []
+    for i in dataBaseY3.itertuples(index=False):
+        inputData = np.array([float(i[3]), float(i[8]), float(i[7])])
+        expectedOutput = np.array(float(i[4]))
+
+        # Forward pass
+        hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
+
+        predictions.append({'DATE': i[0], 'Skelton': outputActivated[0]})
+    # Create a database for the predictions
+    predictionDF = pd.DataFrame(predictions)
+        
 
     actualDF = dataBase[['DATE', 'Skelton']]
-    predictionDF = pd.DataFrame(predictions)
-
-    return actualDF, predictionDF, errorDF
+    return actualDF, predictionDF, errorDF, dataBaseY3
 
 hiddenList, outputList = init_structure(perceptronStructure)
-actualDF, predictionDF, errorDF = train_network(hiddenList, outputList)
+actualDF, predictionDF, errorDF, dataBaseY3 = train_network(hiddenList, outputList)
 
 with PdfPages('plots/error_vs_epochs.pdf') as pdf:
     line_plot(errorDF, pdf)
-    scatter_plot([actualDF, predictionDF], 'Skelton', pdf, ['b', 'r'])
+    scatter_plot([dataBaseY3, predictionDF], 'Skelton', pdf, ['b', 'r'])
