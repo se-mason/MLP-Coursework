@@ -17,8 +17,7 @@ def sigmoid(x):
 def sigmoid_derivative(x):
     s = sigmoid(x)
     return s * (1 - s)
-
-# Cost function
+  
 def cost_function(expectedOutput, outputActivated):
     '''Calculates the error of the neural network'''
     return expectedOutput - outputActivated
