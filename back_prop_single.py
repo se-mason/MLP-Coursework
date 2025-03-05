@@ -99,10 +99,11 @@ def train_network(trainingData, evaluationData, hiddenList, outputList):
     errorDF = pd.DataFrame(columns=['epoch', 'error'])
 
     while count < epochs:
+        # Initialize an empty DataFrame to store the mean error for the epoch
+        meanErrorDF = pd.DataFrame(columns=['error'])
+
+        # Iterate through the training data
         for i, day in enumerate(trainingData.itertuples(index=False), start=0):
-            # No errors for our of range datapoints (first and last)
-            if i == len(dataBase)-1 or i == 0:
-                continue
 
             inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
             expectedOutput = np.array(float(day[1]))
@@ -110,13 +111,17 @@ def train_network(trainingData, evaluationData, hiddenList, outputList):
             # Forward pass
             hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
 
+            # Calculate the error and store it
+            error = cost_function(expectedOutput, outputActivated)
+            newMeanErrorDF = pd.DataFrame({'error': [error]})
+            meanErrorDF = pd.concat([meanErrorDF, newMeanErrorDF], ignore_index=True)
+
             # Backward pass
             hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1))
 
         count += 1
-        # Calculate the error
-        error = cost_function(expectedOutput, outputActivated)
-        newError = pd.DataFrame({'epoch': [count], 'error': [error]})
+        # Store the mean error for the epoch
+        newError = pd.DataFrame({'epoch': [count], 'error': [meanErrorDF['error'].mean()]})
         errorDF = pd.concat([errorDF, newError], ignore_index=True)
         if count % 50 == 0:
             print(f'Epoch: {count}, Error: {error}')
@@ -169,14 +174,14 @@ skeltonMin = trainingData['Skelton'].min()
 # Normalize the data
 trainingData.iloc[:, 1:]= min_max_scaler(dataBase.iloc[:, 1:])
 
-
-
+# Train the neural network
 predictionDF, errorDF,  = train_network(trainingData[trainingData['DATE'].dt.year.isin([1993, 1994])],trainingData[trainingData['DATE'].dt.year == 1995],  hiddenList, outputList)
 
 # Denormalize the data
 predictionDF['Skelton'] = min_max_reverser(predictionDF['Skelton'], skeltonMax, skeltonMin)
 trainingData['Skelton'] = min_max_reverser(trainingData['Skelton'], skeltonMax, skeltonMin)
 
+# Plot the data
 with PdfPages('plots/error_vs_epochs.pdf') as pdf:
     line_plot(errorDF, pdf)
     scatter_plot([trainingData[trainingData['DATE'].dt.year == 1995], predictionDF], 'Skelton', pdf, ['b', 'r'])

@@ -7,6 +7,7 @@ virtual environment using anaconda installation
 Pandas - sqlachemy
 OpenPYXL
 sqlite3
+seaborn for heatmap
 
 ## Aims
 - To use the data to predict the flow rate at Skelton in advance
