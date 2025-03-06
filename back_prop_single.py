@@ -56,11 +56,11 @@ def forward_pass(inputData, hiddenList, outputList):
     '''Forward pass of the neural network'''
 
     # Calculate for the hidden layer
-    hiddenSum = np.dot(inputData, hiddenList[0]) + hiddenList[1]
+    hiddenSum = (inputData @ hiddenList[0]) + hiddenList[1]
     hiddenActivated = sigmoid(hiddenSum)
 
     # Calculate for the output layer
-    outputSum = np.dot(hiddenActivated, outputList[0]) + outputList[1]
+    outputSum = (hiddenActivated @ outputList[0]) + outputList[1]
     outputActivated = sigmoid(outputSum)
 
     return hiddenSum, hiddenActivated, outputSum, outputActivated
@@ -76,15 +76,15 @@ def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputA
     outputDelta = structureCost * sigmoid_derivative(outputSum)
 
     # Calculate the delta values for the hidden layer
-    hiddenDelta = np.dot(outputDelta, outputList[0].T) * sigmoid_derivative(hiddenSum)
+    hiddenDelta = (outputDelta @ outputList[0].T) * sigmoid_derivative(hiddenSum)
 
 
     # Update the weights and biases for the output layer
-    outputList[0] += np.dot(hiddenActivated.T, outputDelta) * learningRate
+    outputList[0] += (hiddenActivated.T @ outputDelta) * learningRate
     outputList[1] += outputDelta * learningRate
 
     # Update the weights and biases for the hidden layer
-    hiddenList[0] += np.dot(inputData.T, hiddenDelta) * learningRate
+    hiddenList[0] += (inputData.T @ hiddenDelta) * learningRate
     hiddenList[1] += hiddenDelta * learningRate
 
     return (hiddenList, outputList)
