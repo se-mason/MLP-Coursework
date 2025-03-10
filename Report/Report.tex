@@ -574,6 +574,63 @@ This output then becomes the input for the next layer of nodes, repeating the pr
 \section{Activation Functions}
 \section{Loss Functions}
 
+There are 2 main loss functions that can be used in a neural network, the mean squared error (MSE) and the mean absolute error (MAE).
+The MSE is the most common loss function used in neural networks, as it is differentiable and convex.
+The MAE is less common, but is more robust to outliers in the data.
+\vspace{1em}
+\newline
+We use the cost function to calculated the error of the network, and then use the gradient of the cost function to adjust the weights of the network.
+\subsection{Mean Squared Error}
+The MSE equation is as follows:
+\begin{equation}
+    \text{MSE} = \frac{1}{n}\sum_{i=1}^{n}(E_m - O_m)^2
+\end{equation}
+Where $E_m$ is the expected output and $O_m$ is the actual output.
+
+We differentiate this with respect to output $O_m$ to get the gradient of the cost function.
+\begin{equation}
+    \frac{\partial \text{MSE}}{\partial O_m} = \frac{-2}{n}(E_m - O_m)
+\end{equation}
+
+For large datasets, this can make the error of the network small and meaningless, leading to large training times.
+
+\subsection{Mean Absolute Error}
+The MAE equation is as follows:
+\begin{equation}
+    \text{MAE} = \frac{1}{n}\sum_{i=1}^{n}|E_m - O_m|
+\end{equation}
+
+We differentiate this with respect to output $O_m$ to get the gradient of the cost function.
+
+\begin{equation}
+    \frac{\partial \text{MAE}}{\partial O_m} = \frac{1}{n}\sum_{i=1}^{n}\frac{E_m - O_m}{|E_m - O_m|}
+\end{equation}
+This gives us the following results for each case:
+\begin{equation}
+\frac{\partial MAE}{\partial O_m} =
+\begin{cases} 
+\frac{1}{n}, & \text{if } O_m > E_m \\ 
+-\frac{1}{n}, & \text{if } O_m < E_m 
+\end{cases}
+\end{equation}
+As you cannot divide by 0, there is not a smooth gradient at $O_m = E_m$.
+
+Another potential issue is that as the gradient does not rely on the output, the network may not learn as well as with the MSE.
+This however is its strength, as it is more robust to outliers in the data, as it won't skew the data as much as the MSE.
+\vspace{1em}
+\newline
+For this project, I will use the MSE as the loss function, as the data has been cleaned and interpolated, and the outliers have been removed.
+However, I will use a variation of the MSE.
+
+The function I will use is:
+
+\begin{equation}
+    \frac{\delta MSE}{\delta O_m}  = C(E_m, O_m) = E_m - O_m
+\end{equation}
+This is because the gradient is dependent on the output, and the network will learn better with this function.
+It also removes the negative gradient as a negative gradient pushes the network in the wrong direction with my implementation of the back propagation algorithm.
+I have also removed the division by $n$ as it will stifle my learning rate, as the data is already normalised and $n$ is a constant.
+
 \section{Forward Pass}
 
 For $n$ inputs, $m$ hidden nodes in layer $\mathcal{L}$ and $q$ output nodes.
@@ -836,7 +893,7 @@ Using what we derived, we can find a formula for the delta values of the nodes i
 \vspace{1em}
 \newline
 These delta values can be used in the form of matrices in our network to update the weights and biases.
-For the output layer, the delta value is the output of the cost function, as 100\% of the error comes through the output layer, and then we apply the derivative of the activation function.
+For the output layer, the delta value is the output of the cost function derivative, as 100\% of the error comes through the output layer, and then we apply the derivative of the activation function.
 \begin{align}
     \delta^{\mathcal{L}}_{m} &= C(E_{m},O_{m})\cdot\mathcal{F}'_{m}(\mathcal{S}^{\mathcal{L}}_{m}) \notag\\
     \text{Matrix }\delta^{\mathcal{L}}_{m} \rightarrow \left[1 \times m\right]:  \delta^{\mathcal{L}}_{m} &=
@@ -844,7 +901,7 @@ For the output layer, the delta value is the output of the cost function, as 100
         C(E_{1},O_{1})\cdot\mathcal{F}'_{1}(\mathcal{S}^{\mathcal{L}}_{1}), & \cdots, & C(E_{m},O_{m})\cdot\mathcal{F}'_{m}(\mathcal{S}^{\mathcal{L}}_{m})
     \end{vmatrix} 
 \end{align}
-Where $C(C_{m},\mathcal{O}_{m})$ is the loss function, $E_{m}$ is the expected output and $O_{m}$ is the predicted output of the node.
+Where $C(C_{m},\mathcal{O}_{m})$ is the cost function derivative, $E_{m}$ is the expected output and $O_{m}$ is the predicted output of the node.
 \vspace{1em}
 \newline
 We can then construct an equation for the delta values of the hidden nodes in the network.
@@ -946,3 +1003,5 @@ Once we calculate the delta values for the network, we can then update the weigh
 
 \end{document}
  
+
+% @ instead of np dot
