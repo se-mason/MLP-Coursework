@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -39,13 +40,13 @@ def correlation_plot(dataSets, columnX, columnY, pdfFile, colourSets):
     
     # Plot the data
     plt.figure(figsize=(10, 6))
-    for data, color in zip(dataSets, colourSets):
-        plt.scatter(data[columnX], data[columnY], c=color, label=f'{color} data')
-    plt.title(f'{columnX} vs {columnY}')
-    plt.xlabel(columnX)
-    plt.ylabel(columnY)
-    plt.grid(True)
+    line = np.linspace(1, 200, 200)
+    plt.scatter(dataSets[0][columnX], dataSets[1][columnY], c=colourSets[0], marker='.')
+    plt.plot(line,line, color=colourSets[1], label='Ideal Values')
+    plt.xlabel(f'{columnX} Actual')
+    plt.ylabel(f'{columnY} Predicted')
     plt.legend()
+    plt.title(f'Correlation Plot')
 
     # Save the current figure to the PDF
     pdfFile.savefig()

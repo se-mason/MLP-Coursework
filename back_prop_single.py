@@ -6,7 +6,7 @@ from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
 
 perceptronStructure = (7, 16, 1)
-learningRate = 0.1
+learningRate = 0.2
 epochs = 10000
 
 
@@ -17,10 +17,15 @@ def sigmoid(x):
 def sigmoid_derivative(x):
     s = sigmoid(x)
     return s * (1 - s)
-  
+
 def cost_function(expectedOutput, outputActivated):
     '''Calculates the error of the neural network'''
-    return expectedOutput - outputActivated
+    return ((expectedOutput - outputActivated) ** 2)
+
+  
+def cost_function_derivative(expectedOutput, outputActivated, dfLength):
+    '''Calculates the error of the neural network for the backwards pass'''
+    return (expectedOutput - outputActivated) * (2/dfLength)
 
 # Normalization function
 def min_max_scaler(data):
@@ -29,7 +34,7 @@ def min_max_scaler(data):
 
 def min_max_reverser(data, dataMax, dataMin):
     '''Function to normalize the data'''
-    return data * (dataMax - dataMin) + data.min()
+    return data * (dataMax - dataMin) + dataMin
 
 
 def init_structure(perceptronStructure):
@@ -66,11 +71,11 @@ def forward_pass(inputData, hiddenList, outputList):
     return hiddenSum, hiddenActivated, outputSum, outputActivated
 
 
-def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData):
+def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData, dfLength):
     '''Backward pass of the neural network'''
 
     # Calculate the cost of the perceptron structure
-    structureCost = cost_function(expectedOutput, outputActivated)
+    structureCost = cost_function_derivative(expectedOutput, outputActivated, dfLength)
 
     # Calculate the delta values for the output layer
     outputDelta = structureCost * sigmoid_derivative(outputSum)
@@ -93,6 +98,7 @@ def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputA
 def train_network(trainingData, evaluationData, hiddenList, outputList):
     '''Trains the neural network with the training data'''
     count = 0
+    dfLength = len(trainingData)
 
     # Initialize an empty DataFrame to store errors
     errorDF = pd.DataFrame(columns=['epoch', 'error'])
@@ -105,7 +111,7 @@ def train_network(trainingData, evaluationData, hiddenList, outputList):
         for i, day in enumerate(trainingData.itertuples(index=False), start=0):
 
             inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
-            expectedOutput = np.array(float(day[1]))
+            expectedOutput = np.array([float(day[1])])
 
             # Forward pass
             hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
@@ -116,7 +122,7 @@ def train_network(trainingData, evaluationData, hiddenList, outputList):
             meanErrorDF = pd.concat([meanErrorDF, newMeanErrorDF], ignore_index=True)
 
             # Backward pass
-            hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1))
+            hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1), dfLength)
 
         count += 1
         # Store the mean error for the epoch
@@ -171,10 +177,10 @@ skeltonMax = trainingData['Skelton'].max()
 skeltonMin = trainingData['Skelton'].min()
 
 # Normalize the data
-trainingData.iloc[:, 1:]= min_max_scaler(dataBase.iloc[:, 1:])
+trainingData.iloc[:, 1:]= min_max_scaler(trainingData.iloc[:, 1:])
 
 # Train the neural network
-predictionDF, errorDF,  = train_network(trainingData[trainingData['DATE'].dt.year.isin([1993, 1994])],trainingData[trainingData['DATE'].dt.year == 1995],  hiddenList, outputList)
+predictionDF, errorDF  = train_network(trainingData[trainingData['DATE'].dt.year.isin([1993, 1994])],trainingData[trainingData['DATE'].dt.year == 1995],  hiddenList, outputList)
 
 # Denormalize the data
 predictionDF['Skelton'] = min_max_reverser(predictionDF['Skelton'], skeltonMax, skeltonMin)
