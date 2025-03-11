@@ -572,9 +572,9 @@ This output then becomes the input for the next layer of nodes, repeating the pr
 
 
 \section{Activation Functions}
-\section{Loss Functions}
+\section{Cost Functions}
 
-There are 2 main loss functions that can be used in a neural network, the mean squared error (MSE) and the mean absolute error (MAE).
+There are 2 main loss functions that can be used in a neural network, the mean squared error (MSE) and the mean absolute error (MAE). 
 The MSE is the most common loss function used in neural networks, as it is differentiable and convex.
 The MAE is less common, but is more robust to outliers in the data.
 \vspace{1em}
@@ -939,6 +939,135 @@ Once we calculate the delta values for the network, we can then update the weigh
 
 \subsection{Implementation of a single hidden layer network}
 
+A single hidden layer can be implemented with a defined structure.
+As we know how many nodes and layers there are, we can hard code the dimensions. 
+We can initialise the weights and biases randomly, with the structure that we define.
+
+\begin{lstlisting}[language=Python]
+back_prop_single.py
+
+import numpy as np
+
+# Define the structure of the network
+perceptronStructure = (7, 16, 1)
+
+def init_structure(perceptronStructure):
+    '''Intialises the perceptron structure with random weights'''
+
+    # Weights and biases for input layer to the hidden layer
+    hiddenWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[0], perceptronStructure[1]))
+    hiddenBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[1]))
+
+    # Weights and biases for hidden layer to the output layer
+    outputWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[1], perceptronStructure[2]))
+    outputBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[2]))
+
+    # Create lists for input and output
+    hiddenList = [hiddenWeightMatrix, hiddenBiasMatrix]
+    outputList = [outputWeightMatrix, outputBiasMatrix]
+
+    return hiddenList, outputList
+
+
+hiddenList, outputList = init_structure(perceptronStructure)
+
+\end{lstlisting}
+In this example, we have a network with 7 input nodes, 16 hidden nodes and 1 output node.
+\vspace{1em}
+\newline
+We iterate through each of the data points and pass them through the forward pass of the network.
+We pass them through a scaling function to normalise the data, then pass them through the network.
+By doing this, the network can appropriately learn to predict the output as all datapoints are are passed through an activation function that outputs between 0 and 1.
+\begin{lstlisting}[language=Python]
+back_prop_single.py
+
+# Normalization function
+def min_max_scaler(data):
+    '''Function to normalize the data'''
+    return (data - data.min()) / (data.max() - data.min())
+
+def min_max_reverser(data, dataMax, dataMin):
+    '''Function to normalize the data'''
+    return data * (dataMax - dataMin) + dataMin
+
+
+def forward_pass(data, hiddenList, outputList):
+    '''Forward pass of the neural network'''
+
+    # Calculate for the hidden layer
+    hiddenSum = (inputData @ hiddenList[0]) + hiddenList[1]
+    hiddenActivated = sigmoid(hiddenSum)
+
+    # Calculate for the output layer
+    outputSum = (hiddenActivated @ outputList[0]) + outputList[1]
+    outputActivated = sigmoid(outputSum)
+
+    return hiddenSum, hiddenActivated, outputSum, outputActivated
+
+
+while count < epochs:
+
+    # Iterate through the training data
+    for i, day in enumerate(trainingData.itertuples(index=False), start=0):
+
+        inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
+        expectedOutput = np.array([float(day[1])])
+
+        # Forward pass
+        hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
+
+\end{lstlisting}
+
+\vspace{1em}
+\newline
+We can then expand by introducing the backward pass to update the weights and biases of the network.
+
+\begin{lstlisting}[language=Python]
+back_prop_single.py
+
+def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData, dfLength):
+    '''Backward pass of the neural network'''
+
+    # Calculate the cost of the perceptron structure
+    structureCost = cost_function_derivative(expectedOutput, outputActivated, dfLength)
+
+    # Calculate the delta values for the output layer
+    outputDelta = structureCost * sigmoid_derivative(outputSum)
+
+    # Calculate the delta values for the hidden layer
+    hiddenDelta = (outputDelta @ outputList[0].T) * sigmoid_derivative(hiddenSum)
+
+
+    # Update the weights and biases for the output layer
+    outputList[0] += (hiddenActivated.T @ outputDelta) * learningRate
+    outputList[1] += outputDelta * learningRate
+
+    # Update the weights and biases for the hidden layer
+    hiddenList[0] += (inputData.T @ hiddenDelta) * learningRate
+    hiddenList[1] += hiddenDelta * learningRate
+
+    return (hiddenList, outputList)
+
+
+while count < epochs:
+
+    # Iterate through the training data
+    for i, day in enumerate(trainingData.itertuples(index=False), start=0):
+
+        inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
+        expectedOutput = np.array([float(day[1])])
+
+        # Forward pass
+        hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
+        hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1), dfLength)
+
+    count += 1
+
+
+\end{lstlisting}
+
+We can then create predictions after a given amount of epochs, and calculate the error of the network.
+We can then plot these predictions against the expected output to see how well the network is performing.
 
 
 \subsection{Multiple Hidden Layers}

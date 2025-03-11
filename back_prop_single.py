@@ -40,8 +40,6 @@ def min_max_reverser(data, dataMax, dataMin):
 def init_structure(perceptronStructure):
     '''Intialises the perceptron structure with random weights'''
 
-    # Calculate the first level of the perceptron
-
     # Weights and biases for input layer to the hidden layer
     hiddenWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[0], perceptronStructure[1]))
     hiddenBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[1]))
@@ -54,7 +52,7 @@ def init_structure(perceptronStructure):
     hiddenList = [hiddenWeightMatrix, hiddenBiasMatrix]
     outputList = [outputWeightMatrix, outputBiasMatrix]
 
-    return (hiddenList, outputList)
+    return hiddenList, outputList
 
 
 def forward_pass(inputData, hiddenList, outputList):
