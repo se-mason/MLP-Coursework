@@ -6,9 +6,10 @@ from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
 
 perceptronStructure = (7, 16, 1)
-learningRate = 0.2
-epochs = 10000
+learningRate = 0.1
+epochs = 1000
 
+np.random.seed(42)
 
 # Sigmoid function and its derivative
 def sigmoid(x):
@@ -23,9 +24,9 @@ def cost_function(expectedOutput, outputActivated):
     return ((expectedOutput - outputActivated) ** 2)
 
   
-def cost_function_derivative(expectedOutput, outputActivated, dfLength):
+def cost_function_derivative(expectedOutput, outputActivated):
     '''Calculates the error of the neural network for the backwards pass'''
-    return (expectedOutput - outputActivated) * (2/dfLength)
+    return (expectedOutput - outputActivated)
 
 # Normalization function
 def min_max_scaler(data):
@@ -69,11 +70,11 @@ def forward_pass(inputData, hiddenList, outputList):
     return hiddenSum, hiddenActivated, outputSum, outputActivated
 
 
-def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData, dfLength):
+def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData):
     '''Backward pass of the neural network'''
 
     # Calculate the cost of the perceptron structure
-    structureCost = cost_function_derivative(expectedOutput, outputActivated, dfLength)
+    structureCost = cost_function_derivative(expectedOutput, outputActivated)
 
     # Calculate the delta values for the output layer
     outputDelta = structureCost * sigmoid_derivative(outputSum)
@@ -114,13 +115,15 @@ def train_network(trainingData, evaluationData, hiddenList, outputList):
             # Forward pass
             hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
 
+            print(hiddenActivated)
+            print(outputActivated)
             # Calculate the error and store it
             error = cost_function(expectedOutput, outputActivated)
             newMeanErrorDF = pd.DataFrame({'error': [error]})
             meanErrorDF = pd.concat([meanErrorDF, newMeanErrorDF], ignore_index=True)
 
             # Backward pass
-            hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1), dfLength)
+            hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1))
 
         count += 1
         # Store the mean error for the epoch

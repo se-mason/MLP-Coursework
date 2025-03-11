@@ -4,9 +4,11 @@ import reading_and_writing as rw
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
-perceptronStructure = ()
+perceptronStructure = (7, [(16, 'sigmoid'), (1, 'sigmoid')])
 learningRate = 0.1
-epochs = 10000
+epochs = 1000
+
+np.random.seed(42)
 
 # Activation Functions
 def get_activation(activation):
@@ -20,19 +22,19 @@ def get_activation_derivative(activation):
     '''Returns the derivative of the activation function'''
 
     # Sigmoid Function
-    
-# Cost Functions
+    if activation == 'sigmoid':
+        return lambda x: (1 / (1 + np.exp(-x)) ) * (1 - (1 / (1 + np.exp(-x)) ))
 
+# Cost Functions
 def cost_function(expectedOutput, outputActivated):
     '''Calculates the error of the neural network'''
-    # return expectedOutput - outputActivated
-    return np.mean((expectedOutput - outputActivated) ** 2)
+    return ((expectedOutput - outputActivated) ** 2)
 
+  
 def cost_function_derivative(expectedOutput, outputActivated):
-    '''Calculates the derivative of the cost function'''
+    '''Calculates the error of the neural network for the backwards pass'''
+    return (expectedOutput - outputActivated)
 
-
-# Normalization functions
 # Normalization function
 def min_max_scaler(data):
     '''Function to normalize the data'''
@@ -40,7 +42,7 @@ def min_max_scaler(data):
 
 def min_max_reverser(data, dataMax, dataMin):
     '''Function to normalize the data'''
-    return data * (dataMax - dataMin) + data.min()
+    return data * (dataMax - dataMin) + dataMin
 
 # Initialise Perceptron Structure
 def init_structure(perceptronStructure):
@@ -56,7 +58,7 @@ def init_structure(perceptronStructure):
 
     # Initialise the first layer of the perceptron
     weightMatrix = np.random.uniform(-1, 1, (inputDimensions, nodeDimensions[0][0]))
-    biasMatrix = np.random.uniform(-1, 1, (1, nodeDimensions))
+    biasMatrix = np.random.uniform(-1, 1, (1, nodeDimensions[0][0]))
 
     # Append to the lists
     weightList.append(weightMatrix)
@@ -73,7 +75,7 @@ def init_structure(perceptronStructure):
 
     return (weightList, biasList)
 
-def forward_pass(inputData, weightList, biasList):
+def forward_pass(inputData, weightList, biasList, layerStructure):
     '''Forward pass of the neural network'''
 
     # Create a list for the activated nodes and summed nodes
@@ -82,12 +84,12 @@ def forward_pass(inputData, weightList, biasList):
 
 
     # Calculate for the hidden layers
-    for layer in range(len(weightList)):
+    for layer, structure in enumerate(layerStructure):
         # Get activation function
-        activationFunction = get_activation(layer[1])
+        activationFunction = get_activation(structure[1])
 
         # Calculate the sum of the matrix
-        sumMatrix = (inputData @ weightList[layer[1]]) + biasList[layer[1]]
+        sumMatrix = (inputData @ weightList[layer]) + biasList[layer]
 
         activatedMatrix = activationFunction(sumMatrix)
 
@@ -101,15 +103,15 @@ def forward_pass(inputData, weightList, biasList):
     return activatedList, summedList
 
 
-def backward_pass(expectedOutput, weightList, biasList, summedList, activatedList, inputData, perceptronStructure):
+def backward_pass(expectedOutput, weightList, biasList, summedList, activatedList, inputData, layerStructure):
     '''Backward pass of the neural network'''
 
     # Cost of the network for that pass
-    structureCost = cost_function(expectedOutput, activatedList[-1])
+    structureCost = cost_function_derivative(expectedOutput, activatedList[-1])
 
     # Calculate the delta values for the output layer
-    get_activation_derivative = get_activation(perceptronStructure[-1][1])
-    outputDelta = structureCost * get_activation_derivative(summedList[-1])
+    activation_derivative = get_activation_derivative(layerStructure[-1][1])
+    outputDelta = structureCost * activation_derivative(summedList[-1])
 
     # Calculate the delta values for the hidden layers
     deltaList = []
@@ -117,27 +119,27 @@ def backward_pass(expectedOutput, weightList, biasList, summedList, activatedLis
 
     # Calculate the delta values for the hidden layers
     for layer in range(len(weightList) - 1, 0, -1):
-        delta = (deltaList[-1] @ weightList[layer[1]].T) * get_activation_derivative(summedList[layer[1]])
+        activation_derivative = get_activation_derivative(layerStructure[layer][1])
+        delta = (deltaList[-1] @ weightList[layer].T) * activation_derivative(summedList[layer])
         deltaList.append(delta)
 
     # Reverse the delta list
     deltaList.reverse()
 
     # Calculate the weights and biases with input layer as previous layer
-    weightList[0] += (inputData.T @ deltaList[layer[1]]) * learningRate
-    biasList[0] += deltaList[layer[1]] * learningRate
+    weightList[0] += (inputData.T @ deltaList[0]) * learningRate
+    biasList[0] += deltaList[0] * learningRate
     
 
     # Update the weights and biases for the output layer
-    for layer in range(1, len(weightList)+1, 1):
-        print(layer)
-        weightList[layer[1]] += (activatedList[layer[1]].T @ deltaList[layer[1]]) * learningRate
-        biasList[layer[1]] += deltaList[layer[1]] * learningRate
+    for layer in range(1, len(weightList), 1):
+        weightList[layer] += (activatedList[layer-1].T @ deltaList[layer]) * learningRate
+        biasList[layer] += deltaList[layer] * learningRate
 
     return (weightList, biasList)
 
 
-def train_network(weightList, biasList, trainingData, epochs):
+def train_network(trainingData, evaluationData, weightList, biasList, perceptronStructure, epochs):
     '''Trains the neural network with the training data'''
 
     count = 0
@@ -154,10 +156,11 @@ def train_network(weightList, biasList, trainingData, epochs):
         for i, day in enumerate(trainingData.itertuples(index=False), start=0):
 
             inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
-            expectedOutput = np.array(float(day[1]))
+            expectedOutput = np.array([float(day[1])])
 
             # Forward pass
-            activatedList, summedList = forward_pass(inputData, weightList, biasList)
+            activatedList, summedList = forward_pass(inputData, weightList, biasList, perceptronStructure[1])
+            print(activatedList)
 
             # Calculate the error and store it
             error = cost_function(expectedOutput, activatedList[-1])
@@ -165,7 +168,7 @@ def train_network(weightList, biasList, trainingData, epochs):
             meanErrorDF = pd.concat([meanErrorDF, newMeanErrorDF], ignore_index=True)
 
             # Backward pass
-            weightList, biasList = backward_pass(expectedOutput, weightList, biasList, summedList, activatedList, inputData, perceptronStructure)
+            weightList, biasList = backward_pass(expectedOutput, weightList, biasList, summedList, activatedList, inputData.reshape(1, -1), perceptronStructure[1])
 
         count += 1
         # Store the mean error for the epoch
@@ -173,6 +176,22 @@ def train_network(weightList, biasList, trainingData, epochs):
         errorDF = pd.concat([errorDF, newError], ignore_index=True)
         if count % 50 == 0:
             print(f'Epoch: {count}, Error: {error}')
+
+
+    print('Training complete')
+    # Predict the data for the next year
+    predictions = []
+    for i, day in enumerate(evaluationData.itertuples(index=False), start=0):
+        inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
+
+        # Forward pass
+        activatedList, summedList = forward_pass(inputData, weightList, biasList, perceptronStructure[1])
+
+        predictions.append({'DATE': day[0], 'Skelton': activatedList[-1]})
+    # Create a database for the predictions
+    predictionDF = pd.DataFrame(predictions)
+        
+    return predictionDF, errorDF
 
 # Initialize the structure of the perceptron
 weightList, biasList = init_structure(perceptronStructure)
@@ -205,4 +224,18 @@ skeltonMax = trainingData['Skelton'].max()
 skeltonMin = trainingData['Skelton'].min()
 
 # Normalize the data
-trainingData.iloc[:, 1:]= min_max_scaler(dataBase.iloc[:, 1:])
+trainingData.iloc[:, 1:] = min_max_scaler(trainingData.iloc[:, 1:])
+
+
+# Train the neural network
+predictionDF, errorDF  = train_network(trainingData[trainingData['DATE'].dt.year.isin([1993, 1994])],trainingData[trainingData['DATE'].dt.year == 1995],  weightList, biasList, perceptronStructure, epochs)
+
+# Denormalize the data
+predictionDF['Skelton'] = min_max_reverser(predictionDF['Skelton'], skeltonMax, skeltonMin)
+trainingData['Skelton'] = min_max_reverser(trainingData['Skelton'], skeltonMax, skeltonMin)
+
+# Plot the data
+with PdfPages('plots/error_vs_epochs.pdf') as pdf:
+    line_plot(errorDF, pdf)
+    scatter_plot([trainingData[trainingData['DATE'].dt.year == 1995], predictionDF], 'Skelton', pdf, ['b', 'r'])
+    correlation_plot([trainingData[trainingData['DATE'].dt.year == 1995], predictionDF], 'Skelton', 'Skelton', pdf, ['b', 'r'])
