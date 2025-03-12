@@ -115,8 +115,6 @@ def train_network(trainingData, evaluationData, hiddenList, outputList):
             # Forward pass
             hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
 
-            print(hiddenActivated)
-            print(outputActivated)
             # Calculate the error and store it
             error = cost_function(expectedOutput, outputActivated)
             newMeanErrorDF = pd.DataFrame({'error': [error]})

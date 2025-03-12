@@ -4,7 +4,7 @@ import reading_and_writing as rw
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
-perceptronStructure = (7, [(16, 'sigmoid'), (1, 'sigmoid')])
+perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'),(16, 'sigmoid'),(16, 'sigmoid'),(16, 'sigmoid'), (16, 'sigmoid'), (1, 'sigmoid')])
 learningRate = 0.1
 epochs = 1000
 
@@ -118,9 +118,9 @@ def backward_pass(expectedOutput, weightList, biasList, summedList, activatedLis
     deltaList.append(outputDelta)
 
     # Calculate the delta values for the hidden layers
-    for layer in range(len(weightList) - 1, 0, -1):
-        activation_derivative = get_activation_derivative(layerStructure[layer][1])
-        delta = (deltaList[-1] @ weightList[layer].T) * activation_derivative(summedList[layer])
+    for layer in range(2, len(weightList)+1, 1):
+        activation_derivative = get_activation_derivative(layerStructure[-layer][1])
+        delta = (deltaList[-1] @ weightList[-(layer)+1].T) * activation_derivative(summedList[-layer])
         deltaList.append(delta)
 
     # Reverse the delta list
@@ -160,7 +160,6 @@ def train_network(trainingData, evaluationData, weightList, biasList, perceptron
 
             # Forward pass
             activatedList, summedList = forward_pass(inputData, weightList, biasList, perceptronStructure[1])
-            print(activatedList)
 
             # Calculate the error and store it
             error = cost_function(expectedOutput, activatedList[-1])
@@ -226,6 +225,9 @@ skeltonMin = trainingData['Skelton'].min()
 # Normalize the data
 trainingData.iloc[:, 1:] = min_max_scaler(trainingData.iloc[:, 1:])
 
+
+sigmoid = get_activation('sigmoid')
+sigmoid_derivative = get_activation_derivative('sigmoid')
 
 # Train the neural network
 predictionDF, errorDF  = train_network(trainingData[trainingData['DATE'].dt.year.isin([1993, 1994])],trainingData[trainingData['DATE'].dt.year == 1995],  weightList, biasList, perceptronStructure, epochs)
