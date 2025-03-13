@@ -304,7 +304,7 @@ def main():
 
     # Define the learning rate and epochs
     learningRate = 0.1
-    trainingEpochs = 1000
+    trainingEpochs = 10000
 
     np.random.seed(42)
 
@@ -330,3 +330,5 @@ if __name__ == '__main__':
 
 end_time = time.time()
 print(f'Time taken: {end_time - start_time} seconds')
+
+# 1000 epochs, 3 layers (7, 16,16,1), LR = 0.1, time = 546 seconds

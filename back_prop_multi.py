@@ -147,12 +147,12 @@ def train_network(trainingData, evaluationData, weightList, biasList, perceptron
     count = 0
 
     # Initialize an empty DataFrame to store errors
-    errorDF = pd.DataFrame(columns=['epoch', 'error'])
+    errorDF = pd.DataFrame(columns=['Epoch', 'Error'])
 
     while count < epochs:
 
         # Initialize an empty DataFrame to store the mean error for the epoch
-        meanErrorDF = pd.DataFrame(columns=['error'])
+        meanErrorDF = pd.DataFrame(columns=['Error'])
 
         # Iterate through the training data
         for i, day in enumerate(trainingData.itertuples(index=False), start=0):
@@ -165,7 +165,7 @@ def train_network(trainingData, evaluationData, weightList, biasList, perceptron
 
             # Calculate the error and store it
             error = cost_function(expectedOutput, activatedList[-1])
-            newMeanErrorDF = pd.DataFrame({'error': [error]})
+            newMeanErrorDF = pd.DataFrame({'Error': [error]})
             meanErrorDF = pd.concat([meanErrorDF, newMeanErrorDF], ignore_index=True)
 
             # Backward pass
@@ -173,7 +173,7 @@ def train_network(trainingData, evaluationData, weightList, biasList, perceptron
 
         count += 1
         # Store the mean error for the epoch
-        newError = pd.DataFrame({'epoch': [count], 'error': [meanErrorDF['error'].mean()]})
+        newError = pd.DataFrame({'Epoch': [count], 'Error': [meanErrorDF['Error'].mean()]})
         errorDF = pd.concat([errorDF, newError], ignore_index=True)
         if count % 100 == 0:
             print(f'Epoch: {count}, Error: {error}')
@@ -240,6 +240,8 @@ predictionDF, errorDF  = train_network(trainingData[trainingData['DATE'].dt.year
 predictionDF['Skelton'] = min_max_reverser(predictionDF['Skelton'], skeltonMax, skeltonMin)
 trainingData['Skelton'] = min_max_reverser(trainingData['Skelton'], skeltonMax, skeltonMin)
 
+mid_time = time.time()
+print(f'Time taken: {mid_time - start_time} seconds')
 # Plot the data
 with PdfPages('plots/error_vs_epochs.pdf') as pdf:
     line_plot(errorDF, pdf)
@@ -248,3 +250,6 @@ with PdfPages('plots/error_vs_epochs.pdf') as pdf:
 
 end_time = time.time()
 print(f'Time taken: {end_time - start_time} seconds')
+
+
+# 1000 epochs, 3 layers (7, 16,16,1), LR = 0.1, time = 2154 seconds
