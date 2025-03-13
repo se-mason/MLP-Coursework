@@ -4,9 +4,11 @@ import reading_and_writing as rw
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
+import time
+
 perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
 learningRate = 0.1
-epochs = 1000
+epochs = 10000
 
 np.random.seed(42)
 
@@ -192,6 +194,8 @@ def train_network(trainingData, evaluationData, weightList, biasList, perceptron
         
     return predictionDF, errorDF
 
+start_time = time.time()
+
 # Initialize the structure of the perceptron
 weightList, biasList = init_structure(perceptronStructure)
 
@@ -241,3 +245,6 @@ with PdfPages('plots/error_vs_epochs.pdf') as pdf:
     line_plot(errorDF, pdf)
     scatter_plot([trainingData[trainingData['DATE'].dt.year == 1995], predictionDF], 'Skelton', pdf, ['b', 'r'])
     correlation_plot([trainingData[trainingData['DATE'].dt.year == 1995], predictionDF], 'Skelton', 'Skelton', pdf, ['b', 'r'])
+
+end_time = time.time()
+print(f'Time taken: {end_time - start_time} seconds')

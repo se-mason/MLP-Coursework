@@ -4,6 +4,8 @@ import reading_and_writing as rw
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
+import time
+
 
 class MLP:
 
@@ -298,11 +300,13 @@ def main():
     dataSet = create_data(predictedColumn)
 
     # Define the structure of the network
-    nodeStructure = [(16, 'sigmoid'), (14, 'sigmoid'), (1, 'sigmoid')]
+    nodeStructure = [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')]
 
     # Define the learning rate and epochs
     learningRate = 0.1
-    trainingEpochs = 100
+    trainingEpochs = 1000
+
+    np.random.seed(42)
 
     # Create the neural network
     neuralNetwork = MLP(dataSet, nodeStructure, learningRate, trainingEpochs, predictedColumn)
@@ -319,5 +323,10 @@ def main():
         scatter_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], 'Skelton', pdf, ['b', 'r'])
         correlation_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], predictedColumn, 'Skelton', pdf, ['b', 'r'])
 
+start_time = time.time()
+
 if __name__ == '__main__':
     main()
+
+end_time = time.time()
+print(f'Time taken: {end_time - start_time} seconds')
