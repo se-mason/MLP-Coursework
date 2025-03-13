@@ -16,7 +16,7 @@ class MLP:
         # Normalise the training data
         self.dataFrameMin = dataSet[PredictedColumn].min()
         self.dataFrameMax = dataSet[PredictedColumn].max()
-        self.dataSet = dataSet
+        self.dataSet = dataSet.copy()
         self.dataSet.iloc[:, 1:] = self.min_max_scaler(self.dataSet.iloc[:, 1:])
 
         # Split the data into training and testing
@@ -72,23 +72,28 @@ class MLP:
         for epoch in range(self.trainingEpochs):
 
             # Create a dataframe to store the mean error for the epoch
-            meanErrorDF = pd.DataFrame(columns=['Error'])
+            meanErrorList = []
+
+            # Convert data to numpy array
+            inputDataArray = self.trainingData.iloc[:, 2:].values
+            expectedOutputArray = self.trainingData.iloc[:, 1].values
 
             # Iterate though each day in the training data
-            for dataPoint in self.trainingData.itertuples(index=False):
+            for i in range(len(inputDataArray)):
 
                 # Split the data point into input and output
-                inputData, expectedOutput = np.array(dataPoint[2:]), np.array(dataPoint[1])
+                inputData, expectedOutput = inputDataArray[i], expectedOutputArray[i]
 
                 # Pass the data through the network
                 activatedList, summedList = self.forward_pass(inputData)
 
-                # Calculate and store the error of this pass
-                newMeanErrorDf = self.error_storing(meanErrorDF, expectedOutput, activatedList[-1], epoch)
-                meanErrorDF = pd.concat([meanErrorDF, newMeanErrorDf], ignore_index=True)
+                meanErrorList.append(self.error_storing(expectedOutput, activatedList[-1]))
 
                 # Backward pass through the network
                 self.backward_pass(expectedOutput, summedList, activatedList, inputData)
+
+            # Convert errors into dataframe
+            meanErrorDF = pd.DataFrame({'Error' : meanErrorList})
 
             # Calculate the mean error for the epoch
             meanError = meanErrorDF['Error'].mean()
@@ -115,7 +120,7 @@ class MLP:
         # Calculate the derivative of the error
         return (expectedOutput - predictedOutput)
     
-    def error_storing(self, meanErrorDF:pd.DataFrame, expectedOutput:np.array, predictedOutput:np.array, epoch:int) -> pd.DataFrame:
+    def error_storing(self, expectedOutput:np.array, predictedOutput:np.array) -> pd.DataFrame:
         '''Function to store the error of the network'''
 
         # De Scale the data
@@ -125,11 +130,7 @@ class MLP:
         # Calculate the error of the network
         networkError = self.cost_function(deScaledExpected, deScaledPredicted)
 
-        # Append the error to the mean error dataframe
-        newMeanErrorDF = pd.DataFrame({'Error': [networkError]})
-        meanErrorDF = pd.concat([meanErrorDF, newMeanErrorDF], ignore_index=True)
-
-        return newMeanErrorDF
+        return networkError
 
 
 
@@ -233,11 +234,15 @@ class MLP:
         # Create a list to store the predictions
         predictionList = []
 
-        # Iterate through the testing data
-        for dataPoint in self.testingData.itertuples(index=False):
+        # Convert data to numpy array
+        inputDataArray = self.testingData.iloc[:, 2:].values
+        dateArray = self.testingData.iloc[:, 0].values
+
+        # Iterate though each day in the training data
+        for i in range(len(inputDataArray)):
 
             # Split the data point into input and output
-            inputData, expectedOutput = np.array(dataPoint[2:]), np.array(dataPoint[1])
+            inputData, date = inputDataArray[i], dateArray[i]
 
             # Pass the data through the network
             activatedList, summedList = self.forward_pass(inputData)
@@ -246,10 +251,13 @@ class MLP:
             deScaledPredicted = self.min_max_reverser(activatedList[-1])
 
             # Append the prediction to the list
-            predictionList.append({'DATE': dataPoint[0], 'Skelton': deScaledPredicted})
+            predictionList.append({'DATE': date, 'Skelton': deScaledPredicted})
 
         # Create a dataframe for the predictions
         self.predictionDF = pd.DataFrame(predictionList)
+
+        # De Scale the data
+        
 
 
 def create_data(predictedColumn:str) -> pd.DataFrame:
@@ -294,7 +302,7 @@ def main():
 
     # Define the learning rate and epochs
     learningRate = 0.1
-    trainingEpochs = 1000
+    trainingEpochs = 100
 
     # Create the neural network
     neuralNetwork = MLP(dataSet, nodeStructure, learningRate, trainingEpochs, predictedColumn)
@@ -309,7 +317,7 @@ def main():
     with PdfPages(f'plots/error_vs_epochs_{learningRate}_{trainingEpochs}.pdf') as pdf:
         line_plot(neuralNetwork.epochErrorDF, pdf)
         scatter_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], 'Skelton', pdf, ['b', 'r'])
-        correlation_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], 'Skelton', 'Skelton', pdf, ['b', 'r'])
+        correlation_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], predictedColumn, 'Skelton', pdf, ['b', 'r'])
 
 if __name__ == '__main__':
     main()

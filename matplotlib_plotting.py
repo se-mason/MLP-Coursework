@@ -25,7 +25,7 @@ def line_plot(dataSet, pdfFile):
     
     # Plot the data
     plt.figure(figsize=(10, 6))
-    plt.plot(dataSet['epoch'], dataSet['error'], 'b')
+    plt.plot(dataSet['Epoch'], dataSet['Error'], 'b')
     plt.title(f'Error vs Epochs')
     plt.xlabel('Epochs')
     plt.ylabel('Error')
