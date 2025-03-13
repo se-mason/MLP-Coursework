@@ -173,7 +173,7 @@ def train_network(trainingData, evaluationData, weightList, biasList, perceptron
         # Store the mean error for the epoch
         newError = pd.DataFrame({'epoch': [count], 'error': [meanErrorDF['error'].mean()]})
         errorDF = pd.concat([errorDF, newError], ignore_index=True)
-        if count % 50 == 0:
+        if count % 100 == 0:
             print(f'Epoch: {count}, Error: {error}')
 
 
