@@ -4,7 +4,7 @@ import reading_and_writing as rw
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
-perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'),(16, 'sigmoid'),(16, 'sigmoid'),(16, 'sigmoid'), (16, 'sigmoid'), (1, 'sigmoid')])
+perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
 learningRate = 0.1
 epochs = 1000
 
@@ -73,7 +73,7 @@ def init_structure(perceptronStructure):
         weightList.append(weightMatrix)
         biasList.append(biasMatrix)
 
-    return (weightList, biasList)
+    return weightList, biasList
 
 def forward_pass(inputData, weightList, biasList, layerStructure):
     '''Forward pass of the neural network'''
