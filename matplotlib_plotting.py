@@ -51,3 +51,16 @@ def correlation_plot(dataSets, columnX, columnY, pdfFile, colourSets):
     # Save the current figure to the PDF
     pdfFile.savefig()
     plt.close()
+
+def plot_text(text, pdfFile):
+    '''Function for plotting text'''
+    
+    # Plot the data
+    plt.figure(figsize=(10, 6))
+    plt.text(0.5, 0.5, text, fontsize=12, ha='center')
+    plt.axis('off')
+
+    # Save the current figure to the PDF
+    pdfFile.savefig()
+    plt.close()
+ 

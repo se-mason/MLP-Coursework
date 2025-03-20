@@ -9,6 +9,7 @@
 \usepackage{float}
 \usepackage{chngcntr}
 \usepackage{tikz}
+\usepackage{pgfplots}
 \usetikzlibrary{matrix,chains,positioning,decorations.pathreplacing,arrows}
 
 \counterwithin{figure}{section}
@@ -1067,11 +1068,15 @@ while count < epochs:
 
 We can then create predictions after a given amount of epochs, and calculate the error of the network.
 We can then plot these predictions against the expected output to see how well the network is performing.
+\vspace{1em}
+\newline
+A single layer network does not allow for complex patterns to be learned, so to improve the network, we can add more hidden layers to the network.
+As stated previously, repeatedly using the sigmoid activation over multiple layers can cause the gradient to vanish, so we can allow the activation to be defined for each indeviual layer.
 
 
 \subsection{Multiple Hidden Layers}
-The first improvement to the network is to add more hidden layers.
-This allows the network to learn more complex patterns in the data, as the network can learn more complex functions.
+To implement multiple hidden layers, we can define the structure of the network as a tuple.
+The first element of the tuple is the number of input nodes, and the second element is a list of tuples, each with the amount of nodes and their activation function.
 We can iteratively generate hidden layers and then use the same process to calculate changes and weight updates.
 
 \begin{lstlisting}[language=Python]
@@ -1159,6 +1164,144 @@ def forward_pass(inputData, weightList, biasList, layerStructure):
 
     return activatedList, summedList
 \end{lstlisting}
+
+The backward pass is the same as the single layer network, but we iterate through the layers and calculate the delta values for each layer.
+We calculate the output layer first and then iterate through the hidden layers to calculate the delta values for each layer.
+Then, we do the same process for updating the weights and biases of the network.
+We do 1 layer separately as the output layer is different to the hidden layers, and the first hidden layer is different to the rest of the hidden layers in terms of calcualtions.
+
+
+\begin{lstlisting}[language=Python]
+back_prop_multi.py
+
+def backward_pass(expectedOutput, weightList, biasList, summedList, activatedList, inputData, layerStructure):
+    '''Backward pass of the neural network'''
+
+    # Cost of the network for that pass
+    structureCost = cost_function_derivative(expectedOutput, activatedList[-1])
+
+    # Calculate the delta values for the output layer
+    activation_derivative = get_activation_derivative(layerStructure[-1][1])
+    outputDelta = structureCost * activation_derivative(summedList[-1])
+
+    # Calculate the delta values for the hidden layers
+    deltaList = []
+    deltaList.append(outputDelta)
+
+    # Calculate the delta values for the hidden layers
+    for layer in range(2, len(weightList)+1, 1):
+        activation_derivative = get_activation_derivative(layerStructure[-layer][1])
+        delta = (deltaList[-1] @ weightList[-(layer)+1].T) * activation_derivative(summedList[-layer])
+        deltaList.append(delta)
+
+    # Reverse the delta list
+    deltaList.reverse()
+
+    # Calculate the weights and biases with input layer as previous layer
+    weightList[0] += (inputData.T @ deltaList[0]) * learningRate
+    biasList[0] += deltaList[0] * learningRate
+    
+
+    # Update the weights and biases for the output layer
+    for layer in range(1, len(weightList), 1):
+        weightList[layer] += (activatedList[layer-1].T @ deltaList[layer]) * learningRate
+        biasList[layer] += deltaList[layer] * learningRate
+
+    return (weightList, biasList)
+
+\end{lstlisting}
+
+The format of data remains the same and we can train the network in the same way as the single layer network.
+We can then plot the results and see how well the network is performing.
+\vspace{1em}
+\newline
+The main downfall of this implementation is the speed of executing the algorithm.
+The algorithm is not optimised for speed, and the calculations are done in a way that is not efficient.
+This can be helped in a later version of the code.
+\vspace{1em}
+\newline
+We can plot some of the results of the network to see how well it is performing.
+
+\begin{lstlisting}[language=Python]
+back_prop_multi.py
+
+perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
+learningRate = 0.1
+epochs = 1000
+
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_1000.pdf}
+    \caption{Error vs. Epochs}
+    \label{fig:error_vs_epochs}
+\end{figure}
+This graph shows the average error of the network over the number of epochs.
+The error was calculated with the mean squared error function.
+The error decreases as the number of epochs increases, showing that the network is learning the patterns in the data.
+The final MSE at epoch 1000 is about 410. This means the RMSE is about 20.25.
+This interpretation is that the network is off by about 20.25 meters per second cubed on average off its true value.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_1000.pdf}
+    \caption{Predicted vs. Expected Output}
+    \label{fig:error_vs_epochs2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=3]{pdfs/error_vs_epochs_0.1_1000.pdf}
+    \caption{Correlation of Predicted vs. Expected Output}
+    \label{fig:error_vs_epochs3}
+\end{figure}
+
+\begin{lstlisting}[language=Python]
+    back_prop_multi.py
+    
+    perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
+    learningRate = 0.1
+    epochs = 10000
+    
+    \end{lstlisting}
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000.pdf}
+        \caption{Error vs. Epochs}
+        \label{fig:error_vs_epochs-2}
+    \end{figure}
+    The MSE in this graph is around 250, which means the RMSE is about 15.8.
+    This provides a much better result than the previous network, showing that the network is learning the patterns in the data.
+    However, we can see that the network stopped learning after about 5000 epochs, as the error does not decrease after this point.
+    We can alter the structure of the network and improve it to reduce the errors
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000.pdf}
+        \caption{Predicted vs. Expected Output}
+        \label{fig:error_vs_epochs2-2}
+    \end{figure}
+
+    Figure 2.6.5 clearly shows a better and more accurate prediction of the network compared to figure 2.6.2.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.8\textwidth, page=3]{pdfs/error_vs_epochs_0.1_10000.pdf}
+        \caption{Correlation of Predicted vs. Expected Output}
+        \label{fig:error_vs_epochs3-2}
+    \end{figure}
+
+    The correlation of the network in figure 1.6.6 is much better than the correlation in figure 1.6.3.
+    The data is less skewed and the network is predicting the data more accurately.
+    \vspace{1em}
+    \newline
+    We can see that the network is learning the patterns in the data, but we can improve the network by changing the structure of the network.
+    To improve the data, we can code improvements to the network to make it more efficient and faster.
+    However, the code is slow to execute and the speed of the implementation needs to improved to make it more efficient.
+    There are also datapoints that are clearly outliers too, and these can be removed to improve the network.
+    Once these points are removed we may see a higher accuracy in the network.
 
 \begin{tikzpicture}[
     net/.style={
