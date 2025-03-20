@@ -1264,44 +1264,78 @@ This interpretation is that the network is off by about 20.25 meters per second 
     learningRate = 0.1
     epochs = 10000
     
-    \end{lstlisting}
-    
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000.pdf}
-        \caption{Error vs. Epochs}
-        \label{fig:error_vs_epochs-2}
-    \end{figure}
-    The MSE in this graph is around 250, which means the RMSE is about 15.8.
-    This provides a much better result than the previous network, showing that the network is learning the patterns in the data.
-    However, we can see that the network stopped learning after about 5000 epochs, as the error does not decrease after this point.
-    We can alter the structure of the network and improve it to reduce the errors
-    
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000.pdf}
-        \caption{Predicted vs. Expected Output}
-        \label{fig:error_vs_epochs2-2}
-    \end{figure}
+\end{lstlisting}
 
-    Figure 2.6.5 clearly shows a better and more accurate prediction of the network compared to figure 2.6.2.
-    
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=0.8\textwidth, page=3]{pdfs/error_vs_epochs_0.1_10000.pdf}
-        \caption{Correlation of Predicted vs. Expected Output}
-        \label{fig:error_vs_epochs3-2}
-    \end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000.pdf}
+    \caption{Error vs. Epochs}
+    \label{fig:error_vs_epochs-2}
+\end{figure}
+The MSE in this graph is around 250, which means the RMSE is about 15.8.
+This provides a much better result than the previous network, showing that the network is learning the patterns in the data.
+However, we can see that the network stopped learning after about 5000 epochs, as the error does not decrease after this point.
+We can alter the structure of the network and improve it to reduce the errors
 
-    The correlation of the network in figure 1.6.6 is much better than the correlation in figure 1.6.3.
-    The data is less skewed and the network is predicting the data more accurately.
-    \vspace{1em}
-    \newline
-    We can see that the network is learning the patterns in the data, but we can improve the network by changing the structure of the network.
-    To improve the data, we can code improvements to the network to make it more efficient and faster.
-    However, the code is slow to execute and the speed of the implementation needs to improved to make it more efficient.
-    There are also datapoints that are clearly outliers too, and these can be removed to improve the network.
-    Once these points are removed we may see a higher accuracy in the network.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000.pdf}
+    \caption{Predicted vs. Expected Output}
+    \label{fig:error_vs_epochs2-2}
+\end{figure}
+
+Figure 2.6.5 clearly shows a better and more accurate prediction of the network compared to figure 2.6.2.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=3]{pdfs/error_vs_epochs_0.1_10000.pdf}
+    \caption{Correlation of Predicted vs. Expected Output}
+    \label{fig:error_vs_epochs3-2}
+\end{figure}
+
+The correlation of the network in figure 1.6.6 is much better than the correlation in figure 1.6.3.
+The data is less skewed and the network is predicting the data more accurately.
+\vspace{1em}
+\newline
+We can see that the network is learning the patterns in the data, but we can improve the network by changing the structure of the network.
+To improve the data, we can code improvements to the network to make it more efficient and faster.
+However, the code is slow to execute and the speed of the implementation needs to improved to make it more efficient.
+There are also datapoints that are clearly outliers too, and these can be removed to improve the network.
+Once these points are removed we may see a higher accuracy in the network.
+
+\subsection{Object oriented implementation}
+
+As previously mentioned, the data has many outliers that are affecting the network, and these need to be removed.
+The previous parameters were:
+\begin{lstlisting}[language=python]
+data_cleaning.py
+
+    iqrWeight = 1.5
+    sdWeight = 2
+    windowSize = 10
+    replacementRange = 6
+
+\end{lstlisting}
+And these will be changed to:
+\begin{lstlisting}[language=python]
+    data_cleaning.py
+    
+    iqrWeight = 1.4
+    sdWeight = 1.6
+    windowSize = 20
+    replacementRange = 8
+    
+\end{lstlisting}
+This removes 1559 data points from the dataset, which is 150\% more than the previous parameters.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=4]{pdfs/iqr1.4_sd1.6,ws20_rr8.pdf}
+    \caption{Cleaned Skelton Data}
+    \label{fig:Data_cleaned}
+\end{figure}
+
+We can then implement the network in an object-oriented way to make it more efficient and easier to use.
+
 
 \begin{tikzpicture}[
     net/.style={

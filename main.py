@@ -15,10 +15,10 @@ dataTable = 'data_table'
 excelFile = 'xlsx/Data-NoHeads.xlsx'
 EXdeviationWeight = 10
 
-iqrWeight = 1.5
-sdWeight = 2
-windowSize = 10
-replacementRange = 6
+iqrWeight = 1.4
+sdWeight = 1.6
+windowSize = 20
+replacementRange = 8
 
 
 pdfPath = f'plots/iqr{iqrWeight}_sd{sdWeight},ws{windowSize}_rr{replacementRange}.pdf'
