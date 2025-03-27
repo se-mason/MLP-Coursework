@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import reading_and_writing as rw
 from matplotlib.backends.backend_pdf import PdfPages
-from matplotlib_plotting import line_plot, scatter_plot, correlation_plot, plot_text
+from matplotlib_plotting import line_plot, scatter_plot, correlation_plot
 
 import time
 
@@ -87,7 +87,7 @@ class MLP:
                 inputData, expectedOutput = inputDataArray[i], expectedOutputArray[i]
 
                 # Pass the data through the network
-                activatedList, summedList = self.forward_pass(inputData)
+                activatedList, summedList = self.forward_pass(inputData) 
 
                 meanErrorList.append(self.error_storing(expectedOutput, activatedList[-1]))
 
@@ -236,19 +236,15 @@ class MLP:
         # Create a list to store the predictions
         predictionList = []
 
-        # Create a list to store the error
-        errorList = []
-
         # Convert data to numpy array
         inputDataArray = self.testingData.iloc[:, 2:].values
         dateArray = self.testingData.iloc[:, 0].values
-        expectedOutputArray = self.testingData.iloc[:, 1].values
 
         # Iterate though each day in the training data
         for i in range(len(inputDataArray)):
 
             # Split the data point into input and output
-            inputData, date, expectedOutput = inputDataArray[i], dateArray[i], expectedOutputArray[i]
+            inputData, date = inputDataArray[i], dateArray[i]
 
             # Pass the data through the network
             activatedList, summedList = self.forward_pass(inputData)
@@ -256,21 +252,13 @@ class MLP:
             # De Scale the data
             deScaledPredicted = self.min_max_reverser(activatedList[-1])
 
-            # Error calculation
-            passError = expectedOutput - deScaledPredicted
-
-            # Append to the list
-            errorList.append(passError)
-
             # Append the prediction to the list
             predictionList.append({'DATE': date, 'Skelton': deScaledPredicted})
 
         # Create a dataframe for the predictions
         self.predictionDF = pd.DataFrame(predictionList)
 
-        # Create a dataframe for the errors
-        self.predictErrorDF = pd.DataFrame({'Error' : errorList})
-
+        # De Scale the data
         
 
 
@@ -311,29 +299,29 @@ def main():
     # Load the data
     dataSet = create_data(predictedColumn)
 
-    trainingEpochs = 3000
+    # Define the structure of the network
+    nodeStructure = [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')]
 
-    for learningRate in np.arange(0.05, 0.15, 0.02):
-        for i in range(6, 18, 2):
+    # Define the learning rate and epochs
+    learningRate = 0.1
+    trainingEpochs = 10000
 
-            # Define the structure of the network
-            nodeStructure = [(i, 'sigmoid'), (1, 'sigmoid')]
+    np.random.seed(42)
 
-            # Create the neural network
-            neuralNetwork = MLP(dataSet, nodeStructure, learningRate, trainingEpochs, predictedColumn)
+    # Create the neural network
+    neuralNetwork = MLP(dataSet, nodeStructure, learningRate, trainingEpochs, predictedColumn)
 
-            # Train the neural network
-            neuralNetwork.train_network()
+    # Train the neural network
+    neuralNetwork.train_network()
 
-            # Predict the output of the network
-            neuralNetwork.predict()
+    # Predict the output of the network
+    neuralNetwork.predict()
 
-            # Plot the data
-            with PdfPages(f'plots/testing/{learningRate}LR_{i}Nodes.pdf') as pdf:
-                line_plot(neuralNetwork.epochErrorDF, pdf)
-                scatter_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], 'Skelton', pdf, ['b', 'r'])
-                correlation_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], predictedColumn, 'Skelton', pdf, ['b', 'r'])
-                plot_text(f'Learning Rate: {learningRate}, Nodes: {i}, Error: {neuralNetwork.predictErrorDF['Error'].mean()}', pdf)
+    # Plot the data
+    with PdfPages(f'plots/error_vs_epochs_{learningRate}_{trainingEpochs}.pdf') as pdf:
+        line_plot(neuralNetwork.epochErrorDF, pdf)
+        scatter_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], 'Skelton', pdf, ['b', 'r'])
+        correlation_plot([dataSet[dataSet['DATE'].dt.year == 1995], neuralNetwork.predictionDF], predictedColumn, 'Skelton', pdf, ['b', 'r'])
 
 start_time = time.time()
 
@@ -343,4 +331,6 @@ if __name__ == '__main__':
 end_time = time.time()
 print(f'Time taken: {end_time - start_time} seconds')
 
-# 1000 epochs, 3 layers (7, 16,16,1), LR = 0.1, time = 546 seconds
+# 10000 epochs, 3 layers (7, 16,16,1), LR = 0.1, time = 546 seconds
+
+# 10000 epochs, 3 layers (7, 16,16,1), LR = 0.01, error 294

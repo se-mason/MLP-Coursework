@@ -35,6 +35,23 @@ def line_plot(dataSet, pdfFile):
     pdfFile.savefig()
     plt.close()
 
+
+def line_plot_multi(dataSets, colourSets, pdfFile):
+    '''Function for plotting a scatter plot of a column of data'''
+    
+    # Plot the data
+    plt.figure(figsize=(10, 6))
+    for data, color in zip(dataSets, colourSets):
+        plt.plot(data['Epoch'], data['Error'], c=color)
+    plt.title(f'Error vs Epochs')
+    plt.xlabel('Epochs')
+    plt.ylabel('Error')
+    plt.grid(True)
+
+    # Save the current figure to the PDF
+    pdfFile.savefig()
+    plt.close()
+
 def correlation_plot(dataSets, columnX, columnY, pdfFile, colourSets):
     '''Function for plotting the correlation between two columns of data'''
     

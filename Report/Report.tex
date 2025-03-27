@@ -30,7 +30,6 @@
 \definecolor{contextframe}{HTML}{81b29a}
 
 
-
 \lstdefinestyle{codeStyle}{
     commentstyle=\color{codegreen},
     keywordstyle=\color{keycolour},
@@ -102,12 +101,12 @@ The libraries used will include:
     \item openpyxl
     \item sqlite3
     \item matplotlib
+    \item seaborn
+    \item time
+    \item matplotlib's PdfPages
 \end{itemize}
 
 The data will be stored in an SQLite database, this is for ease of access and to keep the data in a single location, with concise SQL commands to access the data.
-\newline
-The data will be split into training and testing data, with 60\% of the data used for training, 20\% used for testing and 20\% for evaluation.
-
 
 \chapter{Data Pre-processing}
 \section{Importing data}
@@ -573,6 +572,41 @@ This output then becomes the input for the next layer of nodes, repeating the pr
 
 
 \section{Activation Functions}
+The activation function is a non-linear function that is applied to the output of a node.
+
+\subsection{Sigmoid}
+Sigmoid is a commonly used activation function, as it is simple and smooth.
+It allows for the network to learn complex patterns in the data, as it is non-linear.
+The function is as follows:
+\begin{equation}
+    \sigma(x) = \frac{1}{1+e^{-x}}
+\end{equation}
+
+The sigmoid function however can suffer from the vanishing gradient problem, where the gradient of the function becomes very small as the input becomes very large.
+This can lead to the network not learning as well, as the weights are not updated as much.
+
+\subsection{Tanh}
+The tanh function is similar to the sigmoid function, but is centred around 0, with a range of -1 to 1.
+The function is as follows:
+\begin{equation}
+    \tanh(x) = \frac{e^{x} - e^{-x}}{e^{x} + e^{-x}}
+\end{equation}
+
+The tanh function also suffers from vanishing gradients, as it has a similar structure to sigmoid, however its range is from -1 to 1, so it is more useful for normalising the data.
+
+\subsection{ReLU}
+The ReLU (Rectified Linear Unit) function is a simple function that is used in many neural networks.
+It is a piecewise function, with the function being 0 for all negative values, and the input for all positive values.
+The function is as follows:
+\begin{equation}
+    f(x) = \max(0, x)
+\end{equation}
+
+The ReLU function is used as it is simple and computationally efficient, and it does not suffer from the vanishing gradient problem.
+However, it can suffer from the dying ReLU problem, where the gradient of the function is 0 for all negative values, and the weights are not updated.
+
+
+
 \section{Cost Functions}
 
 There are 2 main loss functions that can be used in a neural network, the mean squared error (MSE) and the mean absolute error (MAE). 
@@ -938,7 +972,7 @@ It is worth remembering that we only update the weights and biases after we have
 Once we calculate the delta values for the network, we can then update the weights and biases.
 
 
-\subsection{Implementation of a single hidden layer network}
+\section{Implementation of a single hidden layer network}
 
 A single hidden layer can be implemented with a defined structure.
 As we know how many nodes and layers there are, we can hard code the dimensions. 
@@ -947,30 +981,30 @@ We can initialise the weights and biases randomly, with the structure that we de
 \begin{lstlisting}[language=Python]
 back_prop_single.py
 
-import numpy as np
+    import numpy as np
 
-# Define the structure of the network
-perceptronStructure = (7, 16, 1)
+    # Define the structure of the network
+    perceptronStructure = (7, 16, 1)
 
-def init_structure(perceptronStructure):
-    '''Intialises the perceptron structure with random weights'''
+    def init_structure(perceptronStructure):
+        '''Intialises the perceptron structure with random weights'''
 
-    # Weights and biases for input layer to the hidden layer
-    hiddenWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[0], perceptronStructure[1]))
-    hiddenBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[1]))
+        # Weights and biases for input layer to the hidden layer
+        hiddenWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[0], perceptronStructure[1]))
+        hiddenBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[1]))
 
-    # Weights and biases for hidden layer to the output layer
-    outputWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[1], perceptronStructure[2]))
-    outputBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[2]))
+        # Weights and biases for hidden layer to the output layer
+        outputWeightMatrix = np.random.uniform(-1, 1, (perceptronStructure[1], perceptronStructure[2]))
+        outputBiasMatrix = np.random.uniform(-1, 1, (1, perceptronStructure[2]))
 
-    # Create lists for input and output
-    hiddenList = [hiddenWeightMatrix, hiddenBiasMatrix]
-    outputList = [outputWeightMatrix, outputBiasMatrix]
+        # Create lists for input and output
+        hiddenList = [hiddenWeightMatrix, hiddenBiasMatrix]
+        outputList = [outputWeightMatrix, outputBiasMatrix]
 
-    return hiddenList, outputList
+        return hiddenList, outputList
 
 
-hiddenList, outputList = init_structure(perceptronStructure)
+    hiddenList, outputList = init_structure(perceptronStructure)
 
 \end{lstlisting}
 In this example, we have a network with 7 input nodes, 16 hidden nodes and 1 output node.
@@ -982,40 +1016,40 @@ By doing this, the network can appropriately learn to predict the output as all 
 \begin{lstlisting}[language=Python]
 back_prop_single.py
 
-# Normalization function
-def min_max_scaler(data):
-    '''Function to normalize the data'''
-    return (data - data.min()) / (data.max() - data.min())
+    # Normalization function
+    def min_max_scaler(data):
+        '''Function to normalize the data'''
+        return (data - data.min()) / (data.max() - data.min())
 
-def min_max_reverser(data, dataMax, dataMin):
-    '''Function to normalize the data'''
-    return data * (dataMax - dataMin) + dataMin
-
-
-def forward_pass(data, hiddenList, outputList):
-    '''Forward pass of the neural network'''
-
-    # Calculate for the hidden layer
-    hiddenSum = (inputData @ hiddenList[0]) + hiddenList[1]
-    hiddenActivated = sigmoid(hiddenSum)
-
-    # Calculate for the output layer
-    outputSum = (hiddenActivated @ outputList[0]) + outputList[1]
-    outputActivated = sigmoid(outputSum)
-
-    return hiddenSum, hiddenActivated, outputSum, outputActivated
+    def min_max_reverser(data, dataMax, dataMin):
+        '''Function to normalize the data'''
+        return data * (dataMax - dataMin) + dataMin
 
 
-while count < epochs:
+    def forward_pass(data, hiddenList, outputList):
+        '''Forward pass of the neural network'''
 
-    # Iterate through the training data
-    for i, day in enumerate(trainingData.itertuples(index=False), start=0):
+        # Calculate for the hidden layer
+        hiddenSum = (inputData @ hiddenList[0]) + hiddenList[1]
+        hiddenActivated = sigmoid(hiddenSum)
 
-        inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
-        expectedOutput = np.array([float(day[1])])
+        # Calculate for the output layer
+        outputSum = (hiddenActivated @ outputList[0]) + outputList[1]
+        outputActivated = sigmoid(outputSum)
 
-        # Forward pass
-        hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
+        return hiddenSum, hiddenActivated, outputSum, outputActivated
+
+
+    while count < epochs:
+
+        # Iterate through the training data
+        for i, day in enumerate(trainingData.itertuples(index=False), start=0):
+
+            inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
+            expectedOutput = np.array([float(day[1])])
+
+            # Forward pass
+            hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
 
 \end{lstlisting}
 
@@ -1025,43 +1059,43 @@ We can then expand by introducing the backward pass to update the weights and bi
 \begin{lstlisting}[language=Python]
 back_prop_single.py
 
-def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData, dfLength):
-    '''Backward pass of the neural network'''
+    def backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData, dfLength):
+        '''Backward pass of the neural network'''
 
-    # Calculate the cost of the perceptron structure
-    structureCost = cost_function_derivative(expectedOutput, outputActivated, dfLength)
+        # Calculate the cost of the perceptron structure
+        structureCost = cost_function_derivative(expectedOutput, outputActivated, dfLength)
 
-    # Calculate the delta values for the output layer
-    outputDelta = structureCost * sigmoid_derivative(outputSum)
+        # Calculate the delta values for the output layer
+        outputDelta = structureCost * sigmoid_derivative(outputSum)
 
-    # Calculate the delta values for the hidden layer
-    hiddenDelta = (outputDelta @ outputList[0].T) * sigmoid_derivative(hiddenSum)
-
-
-    # Update the weights and biases for the output layer
-    outputList[0] += (hiddenActivated.T @ outputDelta) * learningRate
-    outputList[1] += outputDelta * learningRate
-
-    # Update the weights and biases for the hidden layer
-    hiddenList[0] += (inputData.T @ hiddenDelta) * learningRate
-    hiddenList[1] += hiddenDelta * learningRate
-
-    return (hiddenList, outputList)
+        # Calculate the delta values for the hidden layer
+        hiddenDelta = (outputDelta @ outputList[0].T) * sigmoid_derivative(hiddenSum)
 
 
-while count < epochs:
+        # Update the weights and biases for the output layer
+        outputList[0] += (hiddenActivated.T @ outputDelta) * learningRate
+        outputList[1] += outputDelta * learningRate
 
-    # Iterate through the training data
-    for i, day in enumerate(trainingData.itertuples(index=False), start=0):
+        # Update the weights and biases for the hidden layer
+        hiddenList[0] += (inputData.T @ hiddenDelta) * learningRate
+        hiddenList[1] += hiddenDelta * learningRate
 
-        inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
-        expectedOutput = np.array([float(day[1])])
+        return (hiddenList, outputList)
 
-        # Forward pass
-        hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
-        hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1), dfLength)
 
-    count += 1
+    while count < epochs:
+
+        # Iterate through the training data
+        for i, day in enumerate(trainingData.itertuples(index=False), start=0):
+
+            inputData = np.array([float(day[2]), float(day[3]), float(day[4]), float(day[5]), float(day[6]), float(day[7]), float(day[8])])
+            expectedOutput = np.array([float(day[1])])
+
+            # Forward pass
+            hiddenSum, hiddenActivated, outputSum, outputActivated = forward_pass(inputData, hiddenList, outputList)
+            hiddenList, outputList = backward_pass(expectedOutput, hiddenSum, hiddenActivated, outputSum, outputActivated, hiddenList, outputList, inputData.reshape(1, -1), dfLength)
+
+        count += 1
 
 
 \end{lstlisting}
@@ -1074,7 +1108,7 @@ A single layer network does not allow for complex patterns to be learned, so to 
 As stated previously, repeatedly using the sigmoid activation over multiple layers can cause the gradient to vanish, so we can allow the activation to be defined for each indeviual layer.
 
 
-\subsection{Multiple Hidden Layers}
+\section{Multiple Hidden Layers}
 To implement multiple hidden layers, we can define the structure of the network as a tuple.
 The first element of the tuple is the number of input nodes, and the second element is a list of tuples, each with the amount of nodes and their activation function.
 We can iteratively generate hidden layers and then use the same process to calculate changes and weight updates.
@@ -1082,41 +1116,41 @@ We can iteratively generate hidden layers and then use the same process to calcu
 \begin{lstlisting}[language=Python]
 back_prop_multi.py
 
-import numpy as np
+    import numpy as np
 
-# Define the structure of the network
-perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
+    # Define the structure of the network
+    perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
 
-# Initialise Perceptron Structure
-def init_structure(perceptronStructure):
-    '''Initialises the perceptron structure'''
+    # Initialise Perceptron Structure
+    def init_structure(perceptronStructure):
+        '''Initialises the perceptron structure'''
 
-    # Split structure
-    inputDimensions = perceptronStructure[0]
-    nodeDimensions = perceptronStructure[1]
+        # Split structure
+        inputDimensions = perceptronStructure[0]
+        nodeDimensions = perceptronStructure[1]
 
-    # Create lists for weights and biases
-    weightList = []
-    biasList = []
+        # Create lists for weights and biases
+        weightList = []
+        biasList = []
 
-    # Initialise the first layer of the perceptron
-    weightMatrix = np.random.uniform(-1, 1, (inputDimensions, nodeDimensions[0][0]))
-    biasMatrix = np.random.uniform(-1, 1, (1, nodeDimensions[0][0]))
-
-    # Append to the lists
-    weightList.append(weightMatrix)
-    biasList.append(biasMatrix)
-
-    # Initialise the node layers of the perceptron
-    for i in range(1, len(nodeDimensions)):
-        weightMatrix = np.random.uniform(-1, 1, (nodeDimensions[i - 1][0], nodeDimensions[i][0]))
-        biasMatrix = np.random.uniform(-1, 1, (1, nodeDimensions[i][0]))
+        # Initialise the first layer of the perceptron
+        weightMatrix = np.random.uniform(-1, 1, (inputDimensions, nodeDimensions[0][0]))
+        biasMatrix = np.random.uniform(-1, 1, (1, nodeDimensions[0][0]))
 
         # Append to the lists
         weightList.append(weightMatrix)
         biasList.append(biasMatrix)
 
-    return weightList, biasList
+        # Initialise the node layers of the perceptron
+        for i in range(1, len(nodeDimensions)):
+            weightMatrix = np.random.uniform(-1, 1, (nodeDimensions[i - 1][0], nodeDimensions[i][0]))
+            biasMatrix = np.random.uniform(-1, 1, (1, nodeDimensions[i][0]))
+
+            # Append to the lists
+            weightList.append(weightMatrix)
+            biasList.append(biasMatrix)
+
+        return weightList, biasList
 
 
 \end{lstlisting}
@@ -1133,36 +1167,36 @@ This is because it is simpler and each step is the same computation
 \begin{lstlisting}[language=Python]
 back_prop_multi.py
     
-import numpy as np
+    import numpy as np
 
-layerStructure = perceptronStructure[1]
+    layerStructure = perceptronStructure[1]
 
-def forward_pass(inputData, weightList, biasList, layerStructure):
-    '''Forward pass of the neural network'''
+    def forward_pass(inputData, weightList, biasList, layerStructure):
+        '''Forward pass of the neural network'''
 
-    # Create a list for the activated nodes and summed nodes
-    summedList = []
-    activatedList = []
+        # Create a list for the activated nodes and summed nodes
+        summedList = []
+        activatedList = []
 
 
-    # Calculate for the hidden layers
-    for layer, structure in enumerate(layerStructure):
-        # Get activation function
-        activationFunction = get_activation(structure[1])
+        # Calculate for the hidden layers
+        for layer, structure in enumerate(layerStructure):
+            # Get activation function
+            activationFunction = get_activation(structure[1])
 
-        # Calculate the sum of the matrix
-        sumMatrix = (inputData @ weightList[layer]) + biasList[layer]
+            # Calculate the sum of the matrix
+            sumMatrix = (inputData @ weightList[layer]) + biasList[layer]
 
-        activatedMatrix = activationFunction(sumMatrix)
+            activatedMatrix = activationFunction(sumMatrix)
 
-        # Append to the list
-        summedList.append(sumMatrix)
-        activatedList.append(activatedMatrix)
+            # Append to the list
+            summedList.append(sumMatrix)
+            activatedList.append(activatedMatrix)
 
-        # Update the input data
-        inputData = activatedMatrix
+            # Update the input data
+            inputData = activatedMatrix
 
-    return activatedList, summedList
+        return activatedList, summedList
 \end{lstlisting}
 
 The backward pass is the same as the single layer network, but we iterate through the layers and calculate the delta values for each layer.
@@ -1174,40 +1208,40 @@ We do 1 layer separately as the output layer is different to the hidden layers, 
 \begin{lstlisting}[language=Python]
 back_prop_multi.py
 
-def backward_pass(expectedOutput, weightList, biasList, summedList, activatedList, inputData, layerStructure):
-    '''Backward pass of the neural network'''
+    def backward_pass(expectedOutput, weightList, biasList, summedList, activatedList, inputData, layerStructure):
+        '''Backward pass of the neural network'''
 
-    # Cost of the network for that pass
-    structureCost = cost_function_derivative(expectedOutput, activatedList[-1])
+        # Cost of the network for that pass
+        structureCost = cost_function_derivative(expectedOutput, activatedList[-1])
 
-    # Calculate the delta values for the output layer
-    activation_derivative = get_activation_derivative(layerStructure[-1][1])
-    outputDelta = structureCost * activation_derivative(summedList[-1])
+        # Calculate the delta values for the output layer
+        activation_derivative = get_activation_derivative(layerStructure[-1][1])
+        outputDelta = structureCost * activation_derivative(summedList[-1])
 
-    # Calculate the delta values for the hidden layers
-    deltaList = []
-    deltaList.append(outputDelta)
+        # Calculate the delta values for the hidden layers
+        deltaList = []
+        deltaList.append(outputDelta)
 
-    # Calculate the delta values for the hidden layers
-    for layer in range(2, len(weightList)+1, 1):
-        activation_derivative = get_activation_derivative(layerStructure[-layer][1])
-        delta = (deltaList[-1] @ weightList[-(layer)+1].T) * activation_derivative(summedList[-layer])
-        deltaList.append(delta)
+        # Calculate the delta values for the hidden layers
+        for layer in range(2, len(weightList)+1, 1):
+            activation_derivative = get_activation_derivative(layerStructure[-layer][1])
+            delta = (deltaList[-1] @ weightList[-(layer)+1].T) * activation_derivative(summedList[-layer])
+            deltaList.append(delta)
 
-    # Reverse the delta list
-    deltaList.reverse()
+        # Reverse the delta list
+        deltaList.reverse()
 
-    # Calculate the weights and biases with input layer as previous layer
-    weightList[0] += (inputData.T @ deltaList[0]) * learningRate
-    biasList[0] += deltaList[0] * learningRate
-    
+        # Calculate the weights and biases with input layer as previous layer
+        weightList[0] += (inputData.T @ deltaList[0]) * learningRate
+        biasList[0] += deltaList[0] * learningRate
+        
 
-    # Update the weights and biases for the output layer
-    for layer in range(1, len(weightList), 1):
-        weightList[layer] += (activatedList[layer-1].T @ deltaList[layer]) * learningRate
-        biasList[layer] += deltaList[layer] * learningRate
+        # Update the weights and biases for the output layer
+        for layer in range(1, len(weightList), 1):
+            weightList[layer] += (activatedList[layer-1].T @ deltaList[layer]) * learningRate
+            biasList[layer] += deltaList[layer] * learningRate
 
-    return (weightList, biasList)
+        return (weightList, biasList)
 
 \end{lstlisting}
 
@@ -1225,9 +1259,9 @@ We can plot some of the results of the network to see how well it is performing.
 \begin{lstlisting}[language=Python]
 back_prop_multi.py
 
-perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
-learningRate = 0.1
-epochs = 1000
+    perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
+    learningRate = 0.1
+    epochs = 1000
 
 \end{lstlisting}
 
@@ -1258,7 +1292,7 @@ This interpretation is that the network is off by about 20.25 meters per second 
 \end{figure}
 
 \begin{lstlisting}[language=Python]
-    back_prop_multi.py
+back_prop_multi.py
     
     perceptronStructure = (7, [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')])
     learningRate = 0.1
@@ -1303,7 +1337,7 @@ However, the code is slow to execute and the speed of the implementation needs t
 There are also datapoints that are clearly outliers too, and these can be removed to improve the network.
 Once these points are removed we may see a higher accuracy in the network.
 
-\subsection{Object oriented implementation}
+\section{Object oriented implementation}
 
 As previously mentioned, the data has many outliers that are affecting the network, and these need to be removed.
 The previous parameters were:
@@ -1318,7 +1352,7 @@ data_cleaning.py
 \end{lstlisting}
 And these will be changed to:
 \begin{lstlisting}[language=python]
-    data_cleaning.py
+data_cleaning.py
     
     iqrWeight = 1.4
     sdWeight = 1.6
@@ -1336,67 +1370,1199 @@ This removes 1559 data points from the dataset, which is 150\% more than the pre
 
 We can then implement the network in an object-oriented way to make it more efficient and easier to use.
 
+\begin{lstlisting}[language=Python]
+back_prop_OO.py
 
-\begin{tikzpicture}[
-    net/.style={
-      matrix of nodes,
-      nodes={draw, circle, minimum size=0.75cm},
-      column sep=0.75cm,
-      row sep=10pt
-    },
-    >=latex
-]
+    import numpy as np
+    import pandas as pd
 
-  % Define the matrix
-  \matrix[net] (mat) {
-    |[draw=none]| \parbox{1cm}{\centering Input\\Layer} & &|[draw=none]| \parbox{1cm}{\centering Hidden\\Layer\\1} & &|[draw=none]| \parbox{1cm}{\centering Hidden\\Layer\\2}& &|[draw=none]| \parbox{1cm}{\centering Output\\Layer} \\
-    & $\mathcal{S}_{1}^1$  & $\alpha_{1}^1$ & $\mathcal{S}_{1}^2$  & $\alpha_{1}^2$ \\
-    $I_1$ & \\
-    & $\mathcal{S}_{2}^1$  & $\alpha_{2}^1$ & $\mathcal{S}_{2}^2$  & $\alpha_{2}^2$ & $\mathcal{S}_{1}^3$  & $\alpha_{1}^3$\\
-    $I_2$ & \\
-    & $\mathcal{S}_{3}^1$  & $\alpha_{3}^1$ & $\mathcal{S}_{3}^2$  & $\alpha_{3}^2$\\
-  };
+    class MLP:
 
-  % input labels
-  \foreach \i [count=\j] in {3,5}
-  \draw[<-] (mat-\i-1.west) -- ++(-1cm,0) node[left] {Input \j};
+        def __init__(self, dataSet:pd.DataFrame, nodeStructure:list[tuple], learningRate:float, trainingEpochs:int, PredictedColumn:str):
+            '''Initialises the perceptron structure'''
 
-  % Connections from input to hidden layer 1
-  \foreach \i in {3,5}
-    \foreach \o in {2,4,6}
-      \draw[->] (mat-\i-1) -- (mat-\o-2);
+            # Determine the number of input dimensions
+            self.inputDimensions = (dataSet.shape[1]-2)
 
-    % Connections from hidden layer 1 to hidden layer 1
-    \draw[->] (mat-2-2) -- (mat-2-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{1}^1)$};
-    \draw[->] (mat-4-2) -- (mat-4-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{2}^1)$};
-    \draw[->] (mat-6-2) -- (mat-6-3) node[midway, above] {$\mathcal{F}_1(\mathcal{S}_{3}^1)$};
+            # Normalise the training data
+            self.dataFrameMin = dataSet[PredictedColumn].min()
+            self.dataFrameMax = dataSet[PredictedColumn].max()
+            self.dataSet = dataSet.copy()
+            self.dataSet.iloc[:, 1:] = self.min_max_scaler(self.dataSet.iloc[:, 1:])
 
-    % Connections from hidden layer 1 to hidden layer 2
-    \foreach \i in {2,4,6}
-    \foreach \o in {2,4,6}
-      \draw[->] (mat-\i-3) -- (mat-\o-4);
-
-    % Connections from hidden layer 1 to hidden layer 1
-    \draw[->] (mat-2-4) -- (mat-2-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{1}^2)$};
-    \draw[->] (mat-4-4) -- (mat-4-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{2}^2)$};
-    \draw[->] (mat-6-4) -- (mat-6-5) node[midway, above] {$\mathcal{F}_2(\mathcal{S}_{3}^2)$};
-
-    % Connections from hidden layer 1 to hidden layer 2
-    \foreach \i in {2,4,6}
-    \foreach \o in {4}
-      \draw[->] (mat-\i-5) -- (mat-\o-6);
-
-    \draw[->] (mat-4-6) -- (mat-4-7) node[midway, above] {$\mathcal{F}_3(\mathcal{S}_{1}^3)$};
-
-    % input labels
-    \foreach \i [count=\j] in {4}
-    \draw[->] (mat-\i-7.east) -- ++(1cm,0) node[right] {$\mathcal{O}$};
+            # Split the data into training and testing
+            self.trainingData = self.dataSet[dataSet['DATE'].dt.year.isin([1993, 1994])]
+            self.testingData = self.dataSet[dataSet['DATE'].dt.year == 1995]
 
 
+            # Store the structure of the network
+            self.nodeStructure = nodeStructure
+            self.learningRate = learningRate
+            self.trainingEpochs = trainingEpochs
 
-\end{tikzpicture}
+            # Create lists for weights and biases
+            self.weightList = []
+            self.biasList = []
+
+            # Populate the structure lists
+            previousLayer = self.inputDimensions
+
+            for layer in self.nodeStructure:
+                # Create matrices for the weights and biases
+                weightMatrix = np.random.uniform(-1, 1, (previousLayer, layer[0]))
+                biasMatrix = np.random.uniform(-1, 1, (1, layer[0]))
+
+                # Append to the lists
+                self.weightList.append(weightMatrix)
+                self.biasList.append(biasMatrix)
+
+                # Update the previous layer
+                previousLayer = layer[0]
+
+            # Create dataframe for storing the error per epoch
+            self.epochErrorDF = pd.DataFrame(columns=['Epoch', 'Error'])
+
+            # Create dataframe for storing the predictions
+            self.predictionDF = pd.DataFrame(columns=['DATE', 'Skelton'])
+
+
+        def train_network(self) -> pd.DataFrame:
+        '''Function to train the neural network'''
+
+        # Iterate through the training epochs
+        for epoch in range(self.trainingEpochs):
+
+            # Create a dataframe to store the mean error for the epoch
+            meanErrorList = []
+
+            # Convert data to numpy array
+            inputDataArray = self.trainingData.iloc[:, 2:].values
+            expectedOutputArray = self.trainingData.iloc[:, 1].values
+
+            # Iterate though each day in the training data
+            for i in range(len(inputDataArray)):
+
+                # Split the data point into input and output
+                inputData, expectedOutput = inputDataArray[i], expectedOutputArray[i]
+
+                # Pass the data through the network
+                activatedList, summedList = self.forward_pass(inputData) 
+
+                meanErrorList.append(self.error_storing(expectedOutput, activatedList[-1]))
+
+                # Backward pass through the network
+                self.backward_pass(expectedOutput, summedList, activatedList, inputData)
+
+            # Convert errors into dataframe
+            meanErrorDF = pd.DataFrame({'Error' : meanErrorList})
+
+            # Calculate the mean error for the epoch
+            meanError = meanErrorDF['Error'].mean()
+
+            # Store the mean error for the epoch
+            newError = pd.DataFrame({'Epoch': [epoch], 'Error': [meanError]})
+            self.epochErrorDF = pd.concat([self.epochErrorDF, newError], ignore_index=True)
+
+            # Print the error for the epoch
+            if epoch % 100 == 0:
+                print(f'Epoch: {epoch}, Error: {meanError}')
+
+
+\end{lstlisting}
+
+The object oriented approach should hopefully increase speeds.
+To be able to compare networks accurately, in terms of error and time taken, I will use the same machine and parameters to run the networks.
+\begin{lstlisting}[language=Python]
+back_prop_OO.py
+
+    import time
+
+    # Define the structure of the network
+    nodeStructure = [(16, 'sigmoid'),(16, 'sigmoid'), (1, 'sigmoid')]
+
+    # Define the learning rate and epochs
+    learningRate = 0.1
+    trainingEpochs = 10000
+
+    # Fix random seed for reproducibility
+    np.random.seed(42)
+
+    start_time = time.time()
+
+    if __name__ == '__main__':
+        main()
+
+    end_time = time.time()
+    print(f'Time taken: {end_time - start_time} seconds')
+
+\end{lstlisting}
+
+These same parameters will be used for the object-oriented implementation and the previous implementation.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Objected Orientated & Prodcedural  \\
+        \hline
+        546 & 2154 \\
+        \hline
+    \end{tabular}
+    \caption{Time taken to run 10,000 epochs in seconds}
+    \label{tab:iqr_results}
+\end{table}
+
+The object-oriented implementation is much faster than the procedural implementation, with a speed increase of 75\%.
+This is a significant improvement and shows that the object-oriented implementation is much more efficient.
+\vspace{1em}
+\newline
+It is worth noting that the object-oriented implementation is not a perfect match in terms of each steps, as there were minor improvements made to the code to fix some issues.
+However, the main structure of the code is the same, and the improvements made to the code are minor, and both return the same results.
+
+\section{Batch Learning}
+Batch learning is an improvement meant to speed up the learning process of the network.
+Instead of updating the weights and biases after each data point, we can update the weights and biases after a batch of data points.
+This relys on more efficient matrix calculations, rather than iteration.
+\vspace{1em}
+\newline
+As well as offering an increase in speed computationaly, it can also offer an increase to the speed of learning (reduce the amount of epochs used).
+This is because by averaging the error over a batch of data points, we can reduce the noise in the data and get a more accurate representation of the error.
+This can help the network learn the patterns in the data more efficiently.
+
+\begin{lstlisting}[language=Python]
+back_prop_batch_learning.py
+
+    class MLP:
+
+        def __init__(self, dataSet:pd.DataFrame, nodeStructure:list[tuple], learningRate:float, trainingEpochs:int, PredictedColumn:str):
+            '''Initialises the perceptron structure'''
+
+            # Determine the number of input dimensions
+            self.inputDimensions = (dataSet.shape[1]-2)
+
+            # Normalise the training data
+            self.dataFrameMin = dataSet[PredictedColumn].min()
+            self.dataFrameMax = dataSet[PredictedColumn].max()
+            self.dataSet = dataSet.copy()
+            self.dataSet.iloc[:, 1:] = self.min_max_scaler(self.dataSet.iloc[:, 1:])
+
+            # Reshape into a 3D array
+            self.dataSet = self.dataSet.to_numpy().reshape(dataSet.shape[0], 1, dataSet.shape[1])
+
+            # Split the data into training and testing
+            self.trainingData = self.dataSet[dataSet['DATE'].dt.year.isin([1993, 1994])]
+            self.testingData = self.dataSet[dataSet['DATE'].dt.year == 1995]
+
+
+            # Store the structure of the network
+            self.nodeStructure = nodeStructure
+            self.learningRate = learningRate
+            self.trainingEpochs = trainingEpochs
+
+            # Create lists for weights and biases
+            self.weightList = []
+            self.biasList = []
+
+            # Populate the structure lists
+            previousLayer = self.inputDimensions
+
+            for layer in self.nodeStructure:
+                # Create matrices for the weights and biases
+                weightMatrix = np.random.uniform(-1, 1, (previousLayer, layer[0]))
+                biasMatrix = np.random.uniform(-1, 1, (1, layer[0]))
+
+                # Append to the lists
+                self.weightList.append(weightMatrix)
+                self.biasList.append(biasMatrix)
+
+                # Update the previous layer
+                previousLayer = layer[0]
+
+            # Create dataframe for storing the error per epoch
+            self.epochErrorDF = pd.DataFrame(columns=['Epoch', 'Error'])
+
+            # Create dataframe for storing the predictions
+            self.predictionDF = pd.DataFrame(columns=['DATE', 'Skelton'])
+
+        def train_network(self) -> pd.DataFrame:
+            '''Function to train the neural network'''
+    
+            # Iterate through the training epochs
+            for epoch in range(self.trainingEpochs):
+    
+                # Split the data point into input and output, maintaining the 3D structure
+                inputData, expectedOutput = self.trainingData[:, :, 2:], self.trainingData[:, :, 1:2]
+    
+                # Pass the data through the network
+                activatedList, summedList = self.forward_pass(inputData) 
+    
+                # Calculate the error of the network
+                meanErrorList = self.error_storing(expectedOutput, activatedList[-1])
+                
+                # Reshape dimensions
+                meanErrorList = meanErrorList.squeeze(axis=1)
+    
+                # Average the outputs
+                meanErrorList = meanErrorList.mean(axis=1)
+    
+                # Backward pass through the network
+                self.backward_pass(expectedOutput, summedList, activatedList, inputData)
+    
+                # Convert errors into dataframe
+                meanErrorDF = pd.DataFrame({'Error' : meanErrorList})
+    
+                # Calculate the mean error for the epoch
+                meanError = meanErrorDF['Error'].mean()
+    
+                # Store the mean error for the epoch
+                newError = pd.DataFrame({'Epoch': [epoch], 'Error': [meanError]})
+                self.epochErrorDF = pd.concat([self.epochErrorDF, newError], ignore_index=True)
+    
+                # Print the error for the epoch
+                if epoch % 100 == 0:
+                    print(f'Epoch: {epoch}, Error: {meanError}')
+
+\end{lstlisting}
+
+I chose to implement this by using pythons solution to mismatched dimensions, broadcasting.
+This allows me to define all inputs and values at nodes ($S$, $\alpha$) as 3D arrays.
+With broadcasting, I only need one weight matrix, saving space and computation time.
+This is because the weight matrix can be broadcasted to the correct dimensions for each layer.
+\vspace{1em}
+\newline
+When run with our testing structure:
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Batch Learning & Objected Orientated  \\
+        \hline
+        70 & 546 \\
+        \hline
+    \end{tabular}
+    \caption{Time taken to run 10,000 epochs in seconds}
+    \label{tab:iqr_results}
+\end{table}
+
+This time was acheived when passing the whole dataset as a batch.
+This is a significant improvement in speed, with a 87\% increase in speed.
+This is a significant improvement and shows that the batch learning implementation is much more efficient.
+However, the batch learning with the whole batch has a much higher error than the previous implementations.
+\vspace{1em}
+\newline
+The batch learning implementation does not yield the same accuracy as prvious implementations due to the batch size.
+Large batch sizes remove patterns that can be learnt from, and the network can not evolve or learn from these patterns as they are smoothed out.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000.pdf}
+    \caption{Predicted vs. Expected Output for non-Batrch Learning}
+    \label{fig:error_vs_epochs2-3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000_batch.pdf}
+    \caption{Predicted vs. Expected Output for Batrch Learning}
+    \label{fig:error_vs_epochs2-4}
+\end{figure}
+
+As clearly visible in figures 2.6.8 and 2.6.9, the batch learning implementation is not as accurate as the non-batch learning implementation.
+We can however, alter the batch size, either statically or dynamically, therefor allowing for patters to be learnt from the data.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_batch.pdf}
+    \caption{Error vs. Epochs for Batch Learning}
+    \label{fig:error_vs_epochsBatch}
+\end{figure}
+
+Using data from this graph, we can try to calculate the error of the gradient, so that when it stagnates, we can reduce the batch size.
+This allows for fast learning before ending of accurate predictions.
+
+\begin{lstlisting}[language=Python]
+back_prop_batch_learning.py
+
+    class MLP:
+
+    def train_network(self) -> pd.DataFrame:
+        '''Function to train the neural network'''
+
+        # Iterate through the training epochs
+        for epoch in range(self.trainingEpochs):
+
+            # Define the batch data
+            batchData = np.array_split(self.trainingData, self.batchSize)
+
+            # Define the mean error list
+            meanErrorList = []
+
+            # Iterate through the batches
+            for batch in batchData:
+
+                # Split the data point into input and output, maintaining the 3D structure
+                inputData, expectedOutput = batch[:, :, 2:], batch[:, :, 1:2]
+
+                # Pass the data through the network
+                activatedList, summedList = self.forward_pass(inputData) 
+
+                # Calculate the error of the network
+                meanErrorbatch = self.error_storing(expectedOutput, activatedList[-1])
+                
+                # Reshape dimensions
+                meanErrorbatch = meanErrorbatch.squeeze(axis=1)
+
+                # Average the outputs and store in the list
+                meanErrorList.append(meanErrorbatch.mean())
+
+                # Backward pass through the network
+                self.backward_pass(expectedOutput, summedList, activatedList, inputData)
+
+
+            # Convert errors into dataframe
+            meanErrorDF = pd.DataFrame({'Error' : meanErrorList})
+
+            # Calculate the mean error for the epoch
+            meanError = meanErrorDF['Error'].mean()
+
+            # Store the mean error for the epoch
+            newError = pd.DataFrame({'Epoch': [epoch], 'Error': [meanError]})
+            self.epochErrorDF = pd.concat([self.epochErrorDF, newError], ignore_index=True)
+
+            # Only allow changes every 200 epochs to force the network to learn at certain points, and enforces at least 2 epochs
+            if epoch % 200 == 0 and len(self.epochErrorDF) > 1:
+
+                # Calculate the error gradient with respect to the batch size
+                errorGradient = np.gradient(self.epochErrorDF['Error'])
+
+                print(f'Error Gradient: {errorGradient[-1]}')
+
+                # Doesn't allow batch size to be greater than the training data
+                if self.batchSize == len(self.trainingData):
+                    None
+
+                # Increase the batch size
+                elif abs(errorGradient[-1]) < 0.2:
+                    self.batchSize = self.batchSize * 2
+
+                    # Forces batch size to be the same as the training data
+                    if self.batchSize > len(self.trainingData):
+                        self.batchSize = len(self.trainingData)
+    
+\end{lstlisting}
+
+This code allows for batch size to be dynamically decreased, so that when the error gradient stagnates, the batch size is reduced.
+This allows for the network to learn more efficiently and accurately.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        Batch Learning & Batch Learning with Dynamic Batch Size & Objected Orientated  \\
+        \hline
+        70 & 259 & 546\\
+        \hline
+    \end{tabular}
+    \caption{Time taken to run 10,000 epochs in seconds}
+    \label{tab:dynamicBatch}
+
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|c|}
+        \hline
+        Batch Learning & Batch Learning with Dynamic Batch Size & Objected Orientated  \\
+        \hline
+        665 & 295 & 250\\
+        \hline
+    \end{tabular}
+    \caption{MSE at 10,000 epochs}
+    \label{tab:dynamicBatch}
+
+\end{table}
+
+At the 10,000 epoch mark, the dynamic batch size does not reach the same error as the standard object-oriented implementation.
+If trained for longer, it will reach the same point.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_dynamic_batch.pdf}
+    \caption{Error Gradient jumps in Dynamic Batch Size}
+    \label{fig:error_vs_epochs2-3}
+\end{figure}
+
+However, the dynamic batch size implementation is much faster than the object-oriented implementation, with a 46\% increase in speed.
+This is a significant improvement and shows that the dynamic batch size implementation is much more efficient.
+As the batch size approches the size of the training data, the error will decrease, and the network will learn slower.
+This means that for larger epochs, the speed increase is static, and not proportional to the amount of epochs.
+As epochs inceases, the difference in speed between the dynamic batch size and the object-oriented implementation will decrease, and so will the error.
+This implementation is best used for closing ground quickly and then fine-tuning the network with a smaller batch size.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000_dynamic_batch.pdf}
+    \caption{Predicted vs. Expected Output for Dynamic Batch Size} 
+    \label{fig:error_vs_epochs2-3}
+\end{figure}
+
+With large numbers of epochs this implementation looses its speed advantage and becomes the same as thne object-oriented implementation.
+
+\section{Momentum}
+Momentum is a tequnique used to speed up the learning process of the network.
+If the gradient of the error graph is heading in the same direction, the learning rate is increased, propelling the network to learn faster.
+This compounds the changes to remove large errors and speed up the learning process.
+
+\begin{equation}
+    \text{Matrix }\omega^{k}_{nq}  :\omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\alpha_{n}^{k-1}\cdot\delta^{k}_{q} + \Delta\omega^{k}_{nq}
+\end{equation}
+Where $\Delta\omega^{k}_{nq}$ is the momentum value.
+
+\begin{lstlisting}[language=Python]
+back_prop_momentum.py
+
+    class MLP:
+
+        def backward_pass(self, expectedOutput:np.array, summedList:np.array, activatedList:np.array, inputData:np.array):
+            '''Function to pass data through the network'''
+
+            # Calculate the delta values for the network
+            deltaList = self.delta_calculator(expectedOutput, activatedList, summedList)
+
+
+            #  Set previous output as input values
+            previousOutput = inputData
+
+            # Iterate through the layers of the network
+            for layer in range(len(self.nodeStructure)):
+
+                # Update the weights and biases for the layer
+                weightUpdate  = ((np.transpose(previousOutput, (0, 2, 1)) @ deltaList[layer]) * self.learningRate)
+                biasUpdate = (deltaList[layer] * self.learningRate)
+
+                # Update the previous output
+                previousOutput = activatedList[layer]
+
+                # Momentum update
+                momentumValue = (self.weightList[layer] - self.previousWeightList[layer]) * self.momentumConstant
+
+                # Update the weights and biases
+                self.weightList[layer] += (weightUpdate.mean(axis=0, dtype=np.float64) + momentumValue)
+                self.biasList[layer] += biasUpdate.mean (axis=0, dtype=np.float64)
+
+            # Momentum update
+            self.previousWeightList = self.weightList
+
+\end{lstlisting}
+The code shows how the momentum value is implemented and included in the weight update.
+As each weight update is a result of the last, this compounds the changes and speeds up the learning process.
+However, at smaller changes, the momentum can cause the network to overshoot the minimum, and so the momentum constant must be carefully chosen.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_momentum.pdf}
+    \caption{Error vs Epoch for Momentum} 
+    \label{fig:error_vs_epochs2-3}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        407 & 287 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 10,000 epochs of Momentum}
+    \label{tab:dynamicBatch}
+
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000_momentum.pdf}
+    \caption{Predicted vs Expected for Momentum} 
+    \label{fig:error_vs_epochs2-3}
+\end{figure}
+
+This implementation tells us that Momentum allows us to reach lower errors faster, but then struggles to adapt after that point.
+To help adjust this, we can reduce the momentum constant afteer we reach a certain gradient, just as with the batch learning implementation.
+This can help us to fine-tune the network and reach a lower error.
+While assessing this, I noticed my implementation of the gradient for lower batches was incorrect, as it use the whole gradient, not the local gradient.
+This rapidly increases batch size, which is not efficient or effective.
+
+\begin{lstlisting}[language=Python]
+back_prop_momentum.py
+
+    class mlp
+
+        def train_network(self) -> pd.DataFrame:
+            '''Function to train the neural network'''
+
+            # Iterate through the training epochs
+            for epoch in range(self.trainingEpochs):
+
+                # Define the batch data
+                batchData = np.array_split(self.trainingData, self.batchSize)
+
+                # Define the mean error list
+                meanErrorList = []
+
+                # Iterate through the batches
+                for batch in batchData:
+
+                    # Split the data point into input and output, maintaining the 3D structure
+                    inputData, expectedOutput = batch[:, :, 2:], batch[:, :, 1:2]
+
+                    # Pass the data through the network
+                    activatedList, summedList = self.forward_pass(inputData) 
+
+                    # Calculate the error of the network
+                    meanErrorbatch = self.error_storing(expectedOutput, activatedList[-1])
+                    
+                    # Reshape dimensions
+                    meanErrorbatch = meanErrorbatch.squeeze(axis=1)
+
+                    # Average the outputs and store in the list
+                    meanErrorList.append(meanErrorbatch.mean())
+
+                    # Backward pass through the network
+                    self.backward_pass(expectedOutput, summedList, activatedList, inputData)
+
+
+                # Convert errors into dataframe
+                meanErrorDF = pd.DataFrame({'Error' : meanErrorList})
+
+                # Calculate the mean error for the epoch
+                meanError = meanErrorDF['Error'].mean()
+
+                # Store the mean error for the epoch
+                newError = pd.DataFrame({'Epoch': [epoch], 'Error': [meanError]})
+                self.epochErrorDF = pd.concat([self.epochErrorDF, newError], ignore_index=True)
+
+
+                # Only allow changes every 200 epochs to force the network to learn at certain points, and enforces at least 2 epochs
+                if epoch % 200 == 0 and len(self.epochErrorDF) > 1:
+
+                    # Define the last 200 points for an accurate gradient
+                    recentErrors = self.epochErrorDF['Error'][-200:] if len(self.epochErrorDF) >= 200 else self.epochErrorDF['Error']
+
+                    # Calculate the error gradient with respect to the batch size
+                    errorGradient = np.gradient(recentErrors)
+
+                    print(f'Error Gradient: {errorGradient[-1]}')
+
+                    # Doesn't allow batch size to be greater than the training data
+                    if self.batchSize == len(self.trainingData):
+                        None
+
+                    # Increase the batch size
+                    elif abs(errorGradient[-1]) < 0.2:
+                        self.batchSize = self.batchSize * 2
+                        self.momentumConstant = self.momentumConstant * 0.6
+
+                        # Forces batch size to be the same as the training data
+                        if self.batchSize > len(self.trainingData):
+                            self.batchSize = len(self.trainingData)
+
+
+                # Print the error for the epoch
+                if epoch % 100 == 0:
+                    print(f'Epoch: {epoch}, Error: {meanError}, Batch Size: {self.batchSize}')
+    
+\end{lstlisting}
+
+This is my dynamic reduction in momentum constant, which allows for the network to learn faster and then fine-tune the network.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        400 & 287 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 10,000 epochs of Dynamic Momentum}
+    \label{tab:dynamicMomentum}
+
+\end{table}
+
+This improvement is not very significant, as the only increase is it is 7 seconds faster, which is a 1.7\% increase in speed.
+In the last 5000 epochs, the MSE changed by 5. There was also a low point just before at 276, which was skipped over.
+The take-away from this is that the smaller the error, the slower it learns.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_1000_dynamic_momentum.pdf}
+    \caption{Error vs Epoch for Dynamic Momentum} 
+    \label{fig:error_vs_epochsD-2}
+\end{figure}
+
+\section{Bold Driver}
+
+Bold driver is a tequnique that allows us to increase the learning rate when the gradient flattens out, allowing our network to still learn efficiently.
+This can be done with bounds and dynamic learning rate, which can be adjusted to the gradient of the error.
+\vspace{1em}
+\newline
+Bold drivers counter part is Anealing. 
+This is where the learning rate is decreased as the gradient flatterns to help even out the network and stabalise it.
+This helps you reach a minimum point quicker and then not overshoot it, but it can also slow down the learning process.
+As my networks are already stable and are suffering from insifficient learning, I will not be implementing Anealing.
+
+\begin{lstlisting}[language=Python]
+back_prop_bold_driver.py
+
+    class MLP:
+
+        def __init__(self, dataSet:pd.DataFrame, nodeStructure:list[tuple], learningRate:float, trainingEpochs:int, PredictedColumn:str):
+            '''Initialises the perceptron structure'''
+
+            # Create Bold Driver Learning Rate
+            self.boldDriverLearningRate = learningRate
+            self.boldDriverCap = 0.8
+            self.boldDriverIncrease = 1.2
+
+        def train_network(self) -> pd.DataFrame:
+            '''Function to train the neural network''' 
+
+            # Only allow changes every 200 epochs to force the network to learn at certain points, and enforces at least 2 epochs
+            if epoch % 200 == 0 and len(self.epochErrorDF) > 1:
+
+                # Define the last 200 points for an accurate gradient
+                recentErrors = self.epochErrorDF['Error'][-200:] if len(self.epochErrorDF) >= 200 else self.epochErrorDF['Error']
+
+                # Calculate the error gradient with respect to the batch size
+                errorGradient = np.gradient(recentErrors)
+
+                print(f'Error Gradient: {errorGradient[-1]}')
+
+                # Doesn't allow batch size to be greater than the training data
+                if self.batchSize == len(self.trainingData):
+                    None
+
+                # Increase the batch size
+                elif abs(errorGradient[-1]) < 0.3:
+                    self.batchSize = self.batchSize * 2
+                    self.momentumConstant = self.momentumConstant * 0.6
+
+                    # Forces batch size to be the same as the training data
+                    if self.batchSize > len(self.trainingData):
+                        self.batchSize = len(self.trainingData)
+
+                # Update the learning rate
+                if abs(errorGradient[-1]) < 0.07:
+                    self.boldDriverLearningRate = self.boldDriverLearningRate * self.boldDriverIncrease
+
+                    # Caps the learning rate 
+                    if self.boldDriverLearningRate > (1+self.boldDriverCap)*self.learningRate:
+                        self.boldDriverLearningRate = (1+self.boldDriverCap)*self.learningRat
+
+\end{lstlisting}
+
+This code shows how the bold driver learning rate is implemented and included in the weight update.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        434 & 282 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 10,000 epochs of Bold Driver}
+    \label{tab:dynamicMomentum}
+
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_bold_driver.pdf}
+    \caption{Error vs Epoch for Bold Driver} 
+    \label{fig:error_vs_epochsD-2}
+\end{figure}
+
+The bold driver implementation does reduce the error, but not significantly.
+It is possible our bold driver constants are not extreme enough, and so the learning rate is not changing enough.
+
+\begin{lstlisting}[language=Python]
+back_prop_bold_driver.py
+
+    self.boldDriverCap = 20 
+    
+\end{lstlisting}
+By increasing the cap, we can allow the network to learn more at these lower gradients.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        371 & 238 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 10,000 epochs of Bold Driver}
+    \label{tab:dynamicMomentum2}
+
+\end{table}
+
+This is the best result so far, with a 14\% increase in speed and a 16\% decrease in error.
+This is a significant improvement and shows that the bold driver implementation is much more efficient.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_bold_driver_2.pdf}
+    \caption{Error vs Epoch for Bold Driver (2$^{nd}$ Implementation)}  
+    \label{fig:error_vs_epochsD-2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000_bold_driver_2.pdf}
+    \caption{Predicted vs Expected for Bold Driver (2$^{nd}$ Implementation)} 
+    \label{fig:error_vs_epochsD-2}
+\end{figure}
+
+\section{Weight Decay}
+
+Weight decay incetiveses the network to produce smaller weights, which can help to prevent overfitting.
+It does this by adding a penalty term to error function, which is proportional to the size of the weights.
+
+\begin{equation}
+    \text{Matrix }\omega^{k}_{nq}  :\omega'^{k}_{nq} = \omega^{k}_{nq} + \eta\cdot\alpha_{n}^{k-1}\cdot\delta^{k}_{q} + \Delta\omega^{k}_{nq} - \rho \omega^{k}_{nq}
+\end{equation}
+Where $\rho \omega^{k}_{nq}$ is the weight decay term.
+\vspace{1em}
+\newline
+This term forces weights to be much smaller, and so the network is less likely to overfit.
+
+\begin{lstlisting}[language=Python]
+back_prop_weight_decay.py
+
+    class MLP:
+        def __init__(self, dataSet:pd.DataFrame, nodeStructure:list[tuple], learningRate:float, trainingEpochs:int, PredictedColumn:str):
+            '''Initialises the perceptron structure'''
+
+            # Create weight decay constant
+            self.weightDecay = 0.0001
+
+        def backward_pass(self, expectedOutput:np.array, summedList:np.array, activatedList:np.array, inputData:np.array):
+            '''Function to pass data through the network'''
+    
+            # Calculate the delta values for the network
+            deltaList = self.delta_calculator(expectedOutput, activatedList, summedList)
+    
+    
+            #  Set previous output as input values
+            previousOutput = inputData
+    
+            # Iterate through the layers of the network
+            for layer in range(len(self.nodeStructure)):
+    
+                # Update the weights and biases for the layer
+                weightUpdate  = ((np.transpose(previousOutput, (0, 2, 1)) @ deltaList[layer]) * self.boldDriverLearningRate)
+                biasUpdate = (deltaList[layer] * self.boldDriverLearningRate)
+    
+                # Update the previous output
+                previousOutput = activatedList[layer]
+    
+                # Momentum update
+                momentumValue = (self.weightList[layer] - self.previousWeightList[layer]) * self.momentumConstant
+    
+                # Weight Decay update
+                weightDecay = self.weightList[layer] * self.weightDecay
+    
+                # Update the weights and biases
+                self.weightList[layer] += (weightUpdate.mean(axis=0, dtype=np.float64) + momentumValue - weightDecay)
+                self.biasList[layer] += biasUpdate.mean (axis=0, dtype=np.float64)
+    
+            # Momentum update
+            self.previousWeightList = self.weightList
+    
+\end{lstlisting}
+
+This code shows how the weight decay term is implemented and included in the weight update.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        405 & 1313 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 10,000 epochs of Weight Decay}
+    \label{tab:dynamicMomentum}
+
+\end{table}
+
+This is the worst result so far, with a 361\% increase in error. 
+This may be due to the weight decay term being too large, and so the network is not learning effectively.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_weightDecay1.pdf}
+    \caption{Error vs Epoch for Weight Decay} 
+    \label{fig:error_vs_epochsD-2}
+\end{figure}
+
+\begin{lstlisting}[language=Python]
+back_prop_weight_decay.py
+
+    self.weightDecay = 0.00001
+\end{lstlisting}
+
+By reducing the weight decay term, we can allow the network to learn more effectively.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        375 & 303 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 10,000 epochs of Weight Decay (2$^{nd}$ Implementation)}
+    \label{tab:dynamicMomentum}
+
+\end{table}
+
+These results do not match the results without the weight decay as they only got worse.
+I do not beleive that the network suffered from overfitting in previous implementations, and so the weight decay term was not needed.
+For this reason, I will not be using weight decay in my final implementation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_weightDecay2.pdf}
+    \caption{Error vs Epoch for Weight Decay (2$^{nd}$ Implementation)} 
+    \label{fig:error_vs_epochsD-2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000_weightDecay2.pdf}
+    \caption{Predicted vs Expected for Weight Decay (2$^{nd}$ Implementation)} 
+    \label{fig:error_vs_epochsD-2}
+\end{figure}
+
+\section{Line Searching}
+
+Learn searching is about using the gradient to adjust the learning rate of network to be more efficient and avoid overshooting the minimum.
+We can define our output as a function of the learning rate and direction of the gradient.
+\begin{equation}
+O_k = O_{k-1} + \sigma d_k
+\end{equation}
+Where $O_k$ is the output, $O_{k-1}$ is the previous output, $\sigma$ is the learning rate and $d_k$ is the direction of the gradient.
+\space{1em}
+\newline
+As we are optimising in terms of the learning rate, we can frame this as a minimisation problem of function $\phi$
+\begin{equation}
+\phi(\sigma) = f(O_{k-1} + \sigma d_k)
+\end{equation}
+Where $\phi$ is the function we are trying to minimise, $f$ is the function we are trying to optimise.
+This means that we can use the gradient of $\phi$ to find the optimal learning rate as we use it to find the minimum of the function.
+\begin{lstlisting}[language=Python]
+back_prop_line_search.py
+
+    class MLP:
+
+        def line_search(self, expectedOutput:np.array, activatedList:np.array, summedList:np.array, inputData:np.array):
+            '''Function to perform a line search and optimise the learning rate'''
+
+            # Define the next two steps
+            learningRateAlpha = self.learningRate
+            learningRateBeta = self.learningRate * 50
+
+            # Define the initial error and delta list
+            deltaList, structureCost = self.delta_calculator(expectedOutput, activatedList, summedList)
+
+            # Calculate the weights for the first step
+
+            # Calculate the forward pass for the first step
+            activatedListAlpha, summedListAlpha = self.forward_pass(inputData, self.weightList, self.biasList)
+
+            # Calculate the error for the first step
+            structureCostAlpha = self.error_storing(expectedOutput, activatedListAlpha[-1])
+
+            # Calculate the weights for the second step
+
+            # Calculate the forward pass for the second step
+            activatedListBeta, summedListBeta = self.forward_pass(inputData, self.weightList, self.biasList)
+
+            # Calculate the error for the second step
+            structureCostBeta = self.error_storing(expectedOutput, activatedListBeta[-1])
+
+            # Use a quadratic model to approximate the minimum learning rate
+            X = np.array([
+                [0**2, 0, 1],
+                [learningRateAlpha**2, learningRateAlpha, 1],
+                [learningRateBeta**2, learningRateBeta, 1]
+            ])
+            
+            
+            Y = np.array([structureCost.mean(), structureCostAlpha.mean(), structureCostBeta.mean()])
+            
+            # Solve for quadratic coefficients [a, b, c]
+            a, b, c = np.linalg.solve(X, Y)
+            
+            # Compute the minimum learning rate
+            stepSize = -b / (2 * a)
+
+            # Calculate the backwards pass for the chose step size
+            newWeightList, newBiasList = self.backward_pass(activatedList, inputData, stepSize, deltaList)
+
+            self.weightList = newWeightList
+            self.biasList = newBiasList
+
+            # Momentum update
+            self.previousWeightList = newWeightList
+
+            def backward_pass(self, activatedList:np.array, inputData:np.array, lineSearchConstant:float, deltaList:np.array):
+                '''Function to pass data through the network'''
+        
+                # Create a list for the temporary weights and biases
+                temporaryWeightList = []
+                temporaryBiasList = []
+        
+                #  Set previous output as input values
+                previousOutput = inputData
+        
+                # Define the step size for the line search
+                stepSize = self.boldDriverLearningRate * lineSearchConstant
+        
+                # Iterate through the layers of the network
+                for layer in range(len(self.nodeStructure)):
+        
+                    # Update the weights and biases for the layer
+                    weightUpdate  = ((np.transpose(previousOutput, (0, 2, 1)) @ deltaList[layer]) * stepSize)
+                    biasUpdate = (deltaList[layer] * stepSize)
+        
+                    # Update the previous output
+                    previousOutput = activatedList[layer]
+        
+                    # Momentum update
+                    momentumValue = (self.weightList[layer] - self.previousWeightList[layer]) * self.momentumConstant
+        
+                    # Update the weights and biases
+                    temporaryWeightList.append(self.weightList[layer] + (weightUpdate.mean(axis=0, dtype=np.float64) + momentumValue))
+                    temporaryBiasList.append(self.biasList[layer] + biasUpdate.mean (axis=0, dtype=np.float64))
+        
+                return temporaryWeightList, temporaryBiasList
+        
+\end{lstlisting}
+My implementation of $\phi$ is to use the current cost, along with 2 potential costs to approximate the minimum of a quadratic function.
+This minumum will be used as the step size for the line search and then used to update our weights.
+This is a costly operation, as it requires 3 backward passes and 3 forward passes per input.
+With the batch learning, I hope to mitigate the cost of this operation.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        805 & 170 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 10,000 epochs of Line Searching}
+    \label{tab:dynamicMomentum}
+
+\end{table}
+
+This is the best result so far, but with an expected increase in time taken.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_10000_line_search.pdf}
+    \caption{Error vs Epoch for Line Searching} 
+    \label{fig:error_vs_epochsLS1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000_line_search.pdf}
+    \caption{Predicted vs Expected for Line Searching} 
+    \label{fig:error_vs_epochsLS1}
+\end{figure}
+
+While the plots may be further away, the accuracy of the network is much higher, and the predictions at the first section of the year are much better.
+This is a significant improvement and shows that the line search implementation is much more efficient.
+However it is clear that their is an issue, as all the datapoints have been shifted upwards.
+Once rectified, this will be the best implementation of the network.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=3]{pdfs/error_vs_epochs_0.1_10000_line_search.pdf}
+    \caption{Skew for Line Searching} 
+    \label{fig:error_vs_epochsLS1}
+\end{figure}
+
+After analysis, the model was overtraining as the batch size decreases.
+By capping the batch size to 32, the model was able to learn more effectively and not overfit.
+This is likely due to the line search being more effective with smaller batch sizes, and so the network was learning too much.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_10000_linesearch3.pdf}
+    \caption{Predicted vs Expected for Line Searching (2$^{nd}$ Implementation)} 
+    \label{fig:error_vs_epochsLS1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=4]{pdfs/error_vs_epochs_0.1_10000_linesearch3.pdf}
+    \caption{Correlation Plot for Line Searching (2$^{nd}$ Implementation)} 
+    \label{fig:error_vs_epochsLS1}
+\end{figure}
+
+\chapter{Model training and testing}
+
+Most model training and testing occured in the previous chapter, but we will now evaluate the best model and see how well it predicts the data.
+\vspace{1em}
+\newline
+The best model was the line search model, with a batch size of 32.
+This model was able to learn the most effectively and produce the best results in the quickest amount of time.
+As all model simulations were done with the same random seed and with 10,000 epochs, the results may not be as good as they can be.
+\vspace{1em}
+\newline
+We will take the model we chose and run it for 50,000 epochs and evaulate the error of the testing data to see how well the model predicts.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        919 & 195 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for 50,000 epochs of Line Searching}
+    \label{tab:dynamicMomentum}
+\end{table}
+
+When the model was trained for 50,000 epochs, the error was reduced to 195 on the evaluation data, which is a significant improvement.
+It ended on an MSE of 141 on the training data, which is a significant improvement on previous models.
+However, when run for 100,000 epochs, the model became overfit and the MSE increased to 1000 on the evaluation data.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/error_vs_epochs_0.1_50000_final.pdf}
+    \caption{Error vs Epoch for Line Searching (50,000 epochs)} 
+    \label{fig:error_vs_epochsLS1}
+\end{figure}
+The red line represents the error of the evaluation data, and the blue line represents the error of the training data.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=2]{pdfs/error_vs_epochs_0.1_50000_final.pdf}
+    \caption{Predicted vs Expected for Line Searching (50,000 epochs)} 
+    \label{fig:final_pred}
+\end{figure}
+The model matches very well to the expected output, and the correlation is very high for the steady data.
+When the data becomes more sporadic, the model struggles with this
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=6]{pdfs/error_vs_epochs_0.1_50000_final.pdf}
+    \caption{Correlation Plot for Line Searching (50,000 epochs)} 
+    \label{fig:final_corr}
+\end{figure}
+
+
+\chapter{Evaluation}
+
+\section{Model Evaluation}
+The provided model was able to predict the error with a mean squared error of 195, and a time of 919 seconds
+The development of the model was costly, and the time taken to train the model was significant.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=4]{pdfs/error_vs_epochs_0.1_50000_final.pdf}
+    \caption{Predicted vs Expected for Line Searching (50,000 epochs)} 
+    \label{fig:final_pred}
+\end{figure}
+The predicted evaluation data is shown in red, and the expected evaluation data is shown in blue.
+It is obvious that the model is not able to predict the sporadic data as well as the steady data, however the model is acceptable.
+The MSE of 195 gives an average difference of 14, which clearly takes more affect at the sporadic data.
+
+\section{Model Comparison}
+We can compare the model with a basic linear regression algorithm to see how well the model performs.
+This will allow us to see how well the model performs compared to a simple model.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        Time Taken (seconds) & Error (MSE)  \\
+        \hline
+        0.17 & 119 \\
+        \hline
+    \end{tabular}
+    \caption{statistics for Linear Regression}
+    \label{tab:linregres}
+
+\end{table}
+
+The linear regression model beats the neural network model in both metrics.
+This is likely because there is a largely linear relationship between the inputs and output, and so a linear regression model is the best model for this data.
+All 7 inputs are highly correlated and it intuitively follows that they have a high linear correlation.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=1]{pdfs/lin_regression.pdf}
+    \caption{Expected vs Predicted for Linear Regression} 
+    \label{fig:error_vs_epochsLS1}
+\end{figure}
+
+The linear regression model is able to predict the data very well, with a MSE of 119.
+This means that the average difference is 11 between the expected and predicted data.
+This is a significant improvement on the neural network model, but mainly interms of time and effort.
+\vspace{1em}
+\newline
+A differnce of 11 and 14 is not a significant difference, but the time taken to train the model is.
+
+\section{Conclusions}
+The neural network model is able to predict the data well. It used 50\% of the data and trained for 50,000 epochs.
+With the chosen model this was a 195 MSE on the final evaluation data. 
+I would conclude that this neural network is an effective way of predicting the data, but it is not the best way.
+\vspace{1em}
+\newline
+The linear regression model is able to predict the data better, with a 119 MSE on the final evaluation data.
+The linear regression model takes only 0.17 seconds to train, which is significantly faster than the neural network model, around 6000 times faster.
+While the training time is faster, so is the amount of time spent developing the model.
+\vspace{1em}
+\newline
+In conclusion, the Linear Regression model is the best model for this data, as it is able to predict the data better and faster than the neural network model.
+
+\section{Potential Improvements}
+If I was to improve my network, I would try to work with different structures and optimise there.
+I only used 1 Cost funciton and 1 Activation function, and so I could try different ones to see if they are more effective.
+I could also try to vary the node structure and see if that is more effective with more layers or nodes.
+I could also try to implement a seperate gradient calculation, such as conjufate gradient searching.
+\vspace{1em}
+\newline
+Overall I am please with my results and for this purpose, The model is effective and efficient.
+
+\section{Extra Plots}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=5]{pdfs/error_vs_epochs_0.1_50000_final.pdf}
+    \caption{Predicted vs Expected for Line Searching  (50,000 epochs)} 
+    \label{fig:final_pred}
+\end{figure}
+Predicted vs Expected for the whole given dataset.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth, page=8]{pdfs/error_vs_epochs_0.1_50000_final.pdf}
+    \caption{Correlation for Line Searching  (50,000 epochs)} 
+    \label{fig:final_pred}
+\end{figure}
+Correlation between predicted and expected data for the whole given dataset.
 
 \end{document}
  
 
-% @ instead of np dot

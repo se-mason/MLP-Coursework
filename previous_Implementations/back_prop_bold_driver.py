@@ -21,10 +21,23 @@ class MLP:
         self.dataSet = dataSet.copy()
         self.dataSet.iloc[:, 1:] = self.min_max_scaler(self.dataSet.iloc[:, 1:])
 
+        # Reshape into a 3D array
+        self.dataSet = self.dataSet.to_numpy().reshape(dataSet.shape[0], 1, dataSet.shape[1])
+
         # Split the data into training and testing
         self.trainingData = self.dataSet[dataSet['DATE'].dt.year.isin([1993, 1994])]
         self.testingData = self.dataSet[dataSet['DATE'].dt.year == 1995]
 
+        # Define batch size start point
+        self.batchSize = 1
+
+        # Define the momentum constant
+        self.momentumConstant = 0.7
+
+        # Create Bold Driver Learning Rate
+        self.boldDriverLearningRate = learningRate
+        self.boldDriverCap = 20
+        self.boldDriverIncrease = 1.3
 
         # Store the structure of the network
         self.nodeStructure = nodeStructure
@@ -34,6 +47,7 @@ class MLP:
         # Create lists for weights and biases
         self.weightList = []
         self.biasList = []
+        self.previousWeightList = []
 
         # Populate the structure lists
         previousLayer = self.inputDimensions
@@ -42,10 +56,12 @@ class MLP:
             # Create matrices for the weights and biases
             weightMatrix = np.random.uniform(-1, 1, (previousLayer, layer[0]))
             biasMatrix = np.random.uniform(-1, 1, (1, layer[0]))
+            previousWeightMatrix = np.zeros((previousLayer, layer[0]))
 
             # Append to the lists
             self.weightList.append(weightMatrix)
             self.biasList.append(biasMatrix)
+            self.previousWeightList.append(previousWeightMatrix)
 
             # Update the previous layer
             previousLayer = layer[0]
@@ -73,26 +89,33 @@ class MLP:
         # Iterate through the training epochs
         for epoch in range(self.trainingEpochs):
 
-            # Create a dataframe to store the mean error for the epoch
+            # Define the batch data
+            batchData = np.array_split(self.trainingData, self.batchSize)
+
+            # Define the mean error list
             meanErrorList = []
 
-            # Convert data to numpy array
-            inputDataArray = self.trainingData.iloc[:, 2:].values
-            expectedOutputArray = self.trainingData.iloc[:, 1].values
+            # Iterate through the batches
+            for batch in batchData:
 
-            # Iterate though each day in the training data
-            for i in range(len(inputDataArray)):
-
-                # Split the data point into input and output
-                inputData, expectedOutput = inputDataArray[i], expectedOutputArray[i]
+                # Split the data point into input and output, maintaining the 3D structure
+                inputData, expectedOutput = batch[:, :, 2:], batch[:, :, 1:2]
 
                 # Pass the data through the network
-                activatedList, summedList = self.forward_pass(inputData)
+                activatedList, summedList = self.forward_pass(inputData) 
 
-                meanErrorList.append(self.error_storing(expectedOutput, activatedList[-1]))
+                # Calculate the error of the network
+                meanErrorbatch = self.error_storing(expectedOutput, activatedList[-1])
+                
+                # Reshape dimensions
+                meanErrorbatch = meanErrorbatch.squeeze(axis=1)
+
+                # Average the outputs and store in the list
+                meanErrorList.append(meanErrorbatch.mean())
 
                 # Backward pass through the network
                 self.backward_pass(expectedOutput, summedList, activatedList, inputData)
+
 
             # Convert errors into dataframe
             meanErrorDF = pd.DataFrame({'Error' : meanErrorList})
@@ -104,9 +127,44 @@ class MLP:
             newError = pd.DataFrame({'Epoch': [epoch], 'Error': [meanError]})
             self.epochErrorDF = pd.concat([self.epochErrorDF, newError], ignore_index=True)
 
+
+            # Only allow changes every 200 epochs to force the network to learn at certain points, and enforces at least 2 epochs
+            if epoch % 200 == 0 and len(self.epochErrorDF) > 1:
+
+                # Define the last 200 points for an accurate gradient
+                recentErrors = self.epochErrorDF['Error'][-200:] if len(self.epochErrorDF) >= 200 else self.epochErrorDF['Error']
+
+                # Calculate the error gradient with respect to the batch size
+                errorGradient = np.gradient(recentErrors)
+
+                print(f'Error Gradient: {errorGradient[-1]}')
+
+                # Doesn't allow batch size to be greater than the training data
+                if self.batchSize == len(self.trainingData):
+                    None
+
+                # Increase the batch size
+                elif abs(errorGradient[-1]) < 0.13:
+                    self.batchSize = self.batchSize * 2
+                    self.momentumConstant = self.momentumConstant * 0.6
+
+                    # Forces batch size to be the same as the training data
+                    if self.batchSize > len(self.trainingData):
+                        self.batchSize = len(self.trainingData)
+
+                # Update the learning rate
+                if abs(errorGradient[-1]) < 0.07:
+                    self.boldDriverLearningRate = self.boldDriverLearningRate * self.boldDriverIncrease
+
+                    # Caps the learning rate 
+                    if self.boldDriverLearningRate > (1+self.boldDriverCap)*self.learningRate:
+                        self.boldDriverLearningRate = (1+self.boldDriverCap)*self.learningRate
+
+
+
             # Print the error for the epoch
             if epoch % 100 == 0:
-                print(f'Epoch: {epoch}, Error: {meanError}')
+                print(f'Epoch: {epoch}, Error: {meanError}, Batch Size: {self.batchSize}')
 
 
 
@@ -152,8 +210,15 @@ class MLP:
             # Calculate the sum of the matrix
             sumMatrix = (inputData @ self.weightList[layer]) + self.biasList[layer]
 
+            # Squeeze the sum matrix
+            sumMatrix = np.array(sumMatrix.squeeze(axis=1), dtype=np.float64)
+
             # Calculate the activated matrix
             activatedMatrix = activationFunction(sumMatrix)
+
+            # Reshape the activated matrix
+            activatedMatrix = activatedMatrix[:, np.newaxis, :]
+            sumMatrix = sumMatrix[:, np.newaxis, :]
 
             # Append to the lists
             summedList.append(sumMatrix)
@@ -178,28 +243,54 @@ class MLP:
         # Calculate the delta values for the network
         deltaList = self.delta_calculator(expectedOutput, activatedList, summedList)
 
+
         #  Set previous output as input values
-        previousOutput = inputData.reshape(1, -1)
+        previousOutput = inputData
 
         # Iterate through the layers of the network
         for layer in range(len(self.nodeStructure)):
 
             # Update the weights and biases for the layer
-            self.weightList[layer] += (previousOutput.T @ deltaList[layer]) * self.learningRate
-            self.biasList[layer] += deltaList[layer] * self.learningRate
+            weightUpdate  = ((np.transpose(previousOutput, (0, 2, 1)) @ deltaList[layer]) * self.boldDriverLearningRate)
+            biasUpdate = (deltaList[layer] * self.boldDriverLearningRate)
 
             # Update the previous output
             previousOutput = activatedList[layer]
 
+            # Momentum update
+            momentumValue = (self.weightList[layer] - self.previousWeightList[layer]) * self.momentumConstant
+
+            # Update the weights and biases
+            self.weightList[layer] += (weightUpdate.mean(axis=0, dtype=np.float64) + momentumValue)
+            self.biasList[layer] += biasUpdate.mean (axis=0, dtype=np.float64)
+
+        # Momentum update
+        self.previousWeightList = self.weightList
+
 
     def delta_calculator(self, expectedOutput:np.array, activatedList:np.array, summedList:np.array) -> np.array:
+        '''Function to calculate the delta values for the network'''
+
+        # Squeeze the matrices
+        activatedList[-1] = np.array(activatedList[-1].squeeze(axis=1), dtype=np.float64)
+        summedList[-1] = np.array(summedList[-1].squeeze(axis=1), dtype=np.float64)
+        expectedOutput = np.array(expectedOutput.squeeze(axis=1), dtype=np.float64)
 
         # Calculate the cost of the network for that pass
         structureCost = self.cost_function_derivative(expectedOutput, activatedList[-1])
 
+        # Return the activated list to the correct shape
+        # activatedList[-1] = activatedList[-1][:, np.newaxis, :]
+
         # Calculate the delta values for the output layer
         activation_derivative = self.get_activation_derivative(self.nodeStructure[-1][1])
         outputDelta = structureCost * activation_derivative(summedList[-1])
+
+        # Store the output delta
+        previousDelta = outputDelta
+
+        # Reshape the output delta
+        outputDelta = outputDelta[:, np.newaxis, :]
 
         # Calculate the delta values for the hidden layers
         deltaList = []
@@ -211,11 +302,21 @@ class MLP:
             # Get the activation derivative for the layer
             activation_derivative = self.get_activation_derivative(self.nodeStructure[-layer][1])
 
+            # Squeeze the sum matrix
+            summedList[-layer] = np.array(summedList[-layer].squeeze(axis=1), dtype=np.float64)
+
             # Calculate the delta for the layer
-            delta = (deltaList[-1] @ self.weightList[-(layer)+1].T) * activation_derivative(summedList[-layer])
+            delta = (previousDelta @ self.weightList[-(layer)+1].T) * activation_derivative(summedList[-layer])
+
+            # Update the previous delta
+            previousDelta = delta
+
+            # Reshape the delta
+            delta = delta[:, np.newaxis, :]
 
             # Append to the list
             deltaList.append(delta)
+
 
         # Reverse the delta list to match order of the rest of the structure lists
         deltaList.reverse()
@@ -233,34 +334,17 @@ class MLP:
     def predict(self):
         '''Function to predict the output of the network'''
 
-        # Create a list to store the predictions
-        predictionList = []
+        # Split the data point into input and output, maintaining the 3D structure
+        inputData, inputDate = self.testingData[:, :, 2:],  self.testingData[:, :, 0:1]
 
-        # Convert data to numpy array
-        inputDataArray = self.testingData.iloc[:, 2:].values
-        dateArray = self.testingData.iloc[:, 0].values
-
-        # Iterate though each day in the training data
-        for i in range(len(inputDataArray)):
-
-            # Split the data point into input and output
-            inputData, date = inputDataArray[i], dateArray[i]
-
-            # Pass the data through the network
-            activatedList, summedList = self.forward_pass(inputData)
-
-            # De Scale the data
-            deScaledPredicted = self.min_max_reverser(activatedList[-1])
-
-            # Append the prediction to the list
-            predictionList.append({'DATE': date, 'Skelton': deScaledPredicted})
-
-        # Create a dataframe for the predictions
-        self.predictionDF = pd.DataFrame(predictionList)
+        # Pass the data through the network
+        activatedList, summedList = self.forward_pass(inputData)
 
         # De Scale the data
-        
+        deScaledPredicted = self.min_max_reverser(activatedList[-1])
 
+        # Merge date and prediction
+        self.predictionDF = pd.DataFrame(np.concatenate([inputDate, deScaledPredicted], axis=2).squeeze(axis=1), columns=['DATE', 'Skelton'])
 
 def create_data(predictedColumn:str) -> pd.DataFrame:
     '''Function to create a sample dataset'''
@@ -331,4 +415,3 @@ if __name__ == '__main__':
 end_time = time.time()
 print(f'Time taken: {end_time - start_time} seconds')
 
-# 1000 epochs, 3 layers (7, 16,16,1), LR = 0.1, time = 546 seconds

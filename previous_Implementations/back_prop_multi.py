@@ -252,4 +252,4 @@ end_time = time.time()
 print(f'Time taken: {end_time - start_time} seconds')
 
 
-# 1000 epochs, 3 layers (7, 16,16,1), LR = 0.1, time = 2154 seconds
+# 10000 epochs, 3 layers (7, 16,16,1), LR = 0.1, time = 2154 seconds
